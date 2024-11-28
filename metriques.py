@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.ticker as ticker
 from ast import literal_eval
+import itertools
 
 ratings = pd.read_csv('./datasets/ratings.csv')
 movies = pd.read_csv("./datasets/movies_metadata.csv")
@@ -68,3 +69,52 @@ def analitza_generes(movies):
     plt.show()
 
 #analitza_generes(movies)
+
+# Funció per comptar pel·lícules per intervals de durada
+def compta_pellicules_per_durada(movies):
+    mv = movies.dropna(subset=['runtime', 'popularity'])
+    mv['popularity'] = mv['popularity'].astype(float)
+    intervals = [0, 30, 80, 130, np.inf]
+    etiquetes = ['Curmetratge', 'Pel·lícula curta', 'Pel·lícula', 'Pel·lícula llarga']
+    runtime = pd.to_numeric(mv['runtime'], errors='coerce')
+    durada = pd.cut(runtime, bins=intervals, labels=etiquetes, right=False)
+    comptador_intervals = durada.value_counts().sort_index()
+    popularitat_intervals = mv.groupby(durada)['popularity'].mean()
+    popularitat_intervals = mv.groupby(durada)['popularity'].mean()
+    taula_intervals = pd.DataFrame({'Comptador': comptador_intervals,'Popularitat Mitjana': popularitat_intervals})
+    print(taula_intervals)
+
+#compta_pellicules_per_durada(movies)
+
+# Funció per mirar la relació entre la puntuació i el nombre de vots
+def vote_vs_rate(movies):
+    correlacio = movies[['vote_count', 'vote_average']].corr().iloc[0, 1]
+    print(f"Correlació entre Nombre de Vots i Puntuació: {correlacio:.2f}")
+    plt.figure(figsize=(10, 6))
+    sns.scatterplot(x='vote_count', y='vote_average', data=movies, alpha=0.7)
+    plt.title('Puntuació vs Nombre de Vots')
+    plt.xlabel('Nombre de Vots')
+    plt.ylabel('Puntuació')
+    plt.show()
+
+#vote_vs_rate(movies)
+
+
+# Funció per analitzar si els directors i actors més populars influeixen en la popularitat de les pel·lícules 
+def analitza_directors_actors(credits, movies):
+    crew = credits['crew'].apply(literal_eval)
+    cast = credits['cast'].apply(literal_eval)
+
+    credits['directors'] = crew.apply(lambda x: [i['name'] for i in x if i['job'] == 'Director'])
+    directors = credits.explode('directors')['directors'].value_counts().reset_index()
+    directors.columns = ['Director', 'Nombre de Pel·lícules']
+
+    credits['actors'] = cast.apply(lambda x: [i['name'] for i in x])
+    actors = credits.explode('actors')['actors'].value_counts().reset_index()
+    actors.columns = ['Actor', 'Nombre de Pel·lícules']    
+
+    print(f"Actors més influents:\n{actors.head(10)}\n")
+    print(f"Directors més influents:\n{directors.head(10)}\n")
+    #Falta mirar si aquests apareixen a els millors pel·lícules
+
+#analitza_directors_actors(credits, movies)
