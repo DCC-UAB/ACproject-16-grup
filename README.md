@@ -8,6 +8,7 @@
     2. com es distribuiran les dades (tran-test-validació)? es treballarà amb una mostra?
     3. buscar altres datasets per utilitzar
     4. mètriques per una visió general del dataset
+    5. els ratings de cada usuari estan en un rang diferent a l'average rating de les pel·licules
 
 - **tipus de recomanador:**
     1. quins recomanadors es faran servir (*collaborative filtering, content based recommendation, ...*)?
