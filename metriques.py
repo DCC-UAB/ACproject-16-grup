@@ -31,7 +31,7 @@ def movies_metrics(movies, min_votes):
     print(f"Pel·lícules mes votades:\n{movies.sort_values('vote_count', ascending=False)[['id','title', 'vote_count', 'vote_average']].head(10)}\n\n")
     print(f"Pel·lícules amb millor puntuació amb més de {min_votes} vots:\n{movies[movies['vote_count'] > min_votes].sort_values('vote_average', ascending=False)[['id','title', 'vote_count', 'vote_average']].head(10)}\n\n")
     
-movies_metrics(movies, 1000)
+#movies_metrics(movies, 1000)
 
 def show_movies_rates(movies,  C, m):
     movies["w_ratings"]= (movies['vote_count']*movies['vote_average'] + C*m) / (movies['vote_count'] + m)
@@ -52,4 +52,3 @@ def show_movies_rates(movies,  C, m):
 C = movies['vote_average'].mean()
 m = movies['vote_count'].quantile(0.3)
 show_movies_rates(movies, m, C)
-print(movies.columns)
