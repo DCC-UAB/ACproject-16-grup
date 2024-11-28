@@ -51,4 +51,4 @@ def show_movies_rates(movies,  C, m):
 
 C = movies['vote_average'].mean()
 m = movies['vote_count'].quantile(0.3)
-show_movies_rates(movies, m, C)
+#show_movies_rates(movies, m, C)
