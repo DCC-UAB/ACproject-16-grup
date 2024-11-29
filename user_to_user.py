@@ -74,14 +74,15 @@ def predict_rating(user_id, movie_id, similarity_matrix, ratings_matrix, topN=3,
         pred_rating = mean_user_rating + sum_nom / sum_dem
         return pred_rating
     else:
-        return mean_user_rating  # Si no es pot calcular, retornem la mitjana de l'usuari
+        return mean_user_rating 
 
-# Exemple d'ús per a la similitud de cosinus
-user_id = 1
+
+# Exemple per a la similitud de cosinus
+user_id = 1 #Usuari número 1
 movie_id = 1221  # Pel·lícula amb id 1221
 predicted_rating_cosine = predict_rating(user_id, movie_id, similarity_matrix_cosine, ratings_matrix, topN=3, method='cosine')
-print(f"Predicció de valoració (cosinus) per l'usuari {user_id} per la pel·lícula {movie_id}: {predicted_rating_cosine:.2f}")
+print(f"Predicció de valoració (cosinus) per l'usuari {user_id} per la pel·lícula {movie_id}: {predicted_rating_cosine}")
 
-# Exemple d'ús per a la similitud de Pearson
+# Exemple per a la correlació de Pearson
 predicted_rating_pearson = predict_rating(user_id, movie_id, similarity_matrix_pearson, ratings_matrix, topN=3, method='pearson')
-print(f"Predicció de valoració (Pearson) per l'usuari {user_id} per la pel·lícula {movie_id}: {predicted_rating_pearson:.2f}")
+print(f"Predicció de valoració (Pearson) per l'usuari {user_id} per la pel·lícula {movie_id}: {predicted_rating_pearson}")

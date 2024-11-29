@@ -15,3 +15,19 @@
     2. quin tipus de distància es farà servir (*Pearson, cosinus, ...*)?
     3. quines mètriques s'utilitzaràn per avaluar els resultats? quina interpretació es podrà realitzar dels resultats?
 
+---
+Treball realitzat durant setmana 1 de projecte:
+**user_to_user.py:**
+Hem creat i fet la primera versió de recomanació només basat en usuari per usuari. 
+Explicació superficial del codi:
+- Arreglar la base de dades -> pivotar per tal de tenir una matriu on files són usuaris i columnes pel·lícules. Cada cel·la correspona al rating que un usuari n ha fet d'una pel·lícula m.
+- Calculem la similitud que hi ha entre els usuaris utilitzant la correlació de Pearson i la similitud del Cosinus. Per tant, creem una altra matriu: files = usuaris; columnes = usuaris; cel·les = similituds/correlacions.
+- Convertim les matrius en dataframes, que ens els proporciona la llibreria de pandas per poder tractar les dades més eficientment (dataframe tracte taules de forma similar a SQL)
+- Fer la funció de prediccions que consisteix en calcular les similituds amb els altres usuaris i predir quina valoració tindrà aquella pel·lícula en concret, utilitzant la fórmula mostrada a classe. 
+
+---
+---
+
+
+
+
