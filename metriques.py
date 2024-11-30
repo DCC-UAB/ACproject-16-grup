@@ -13,6 +13,7 @@ class preprocessing:
         self.credits = pd.read_csv("./datasets/credits.csv")
         self.movies = pd.read_csv("./datasets/movies_metadata.csv")
         self.preprocessing_data()
+        self.movies = self.movies[self.movies['id'].isin(self.credits['id'])]
         self.keywords = pd.read_csv("./datasets/keywords.csv")
         # self.links = pd.read_csv("./datasets/links.csv")
 
@@ -21,7 +22,7 @@ class preprocessing:
         self.movies = self.movies.dropna(subset=['id'])
         self.movies['id'] = self.movies['id'].astype('int64')
         self.movies = self.movies.convert_dtypes()
-        self.movies = self.movies[self.movies['id'].isin(self.credits['id'])]
+        return self.movies
         
     # Funció per mostrar la distribució de les puntuacions    
     def mostra_distribucio_ratings(self):
