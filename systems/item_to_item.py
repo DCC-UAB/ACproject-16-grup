@@ -2,28 +2,37 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
+import sys
+import os
+script_dir = os.path.dirname(os.path.realpath(__file__))
+parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
+sys.path.append(parent_dir)
+
+from data_preprocessing.preprocessing_csv import preprocessing_movies, preprocessing_ratings
 class ItemItemRecommender:
     def __init__(self):
         """
         Inicialitza el sistema de recomanació amb les dades de valoracions i articles.
         """
-        self.ratings = self.read_ratings('./datasets/ratings_small.csv')
-        self.items = self.preprocessing_movies('./datasets/movies_metadata.csv')
+        self.ratings = preprocessing_ratings('./datasets/ratings_small.csv')
+        self.items = preprocessing_movies('./datasets/movies_metadata.csv')
         self.item_similarity = None
     
-    def read_ratings(self, path):
-        ratings = pd.read_csv(path)
-        ratings = ratings.rename(columns={'userId':'user', 'movieId':'id'})
-        ratings.timestamp = pd.to_datetime(ratings.timestamp, unit='s')
-        return ratings
+    # def read_ratings(self, path):
+    #     ratings = pd.read_csv(path)
+    #     ratings = ratings.rename(columns={'userId':'user', 'movieId':'id'})
+    #     ratings.timestamp = pd.to_datetime(ratings.timestamp, unit='s')
+    #     return ratings
         
-    def preprocessing_movies(self, path):
-        items = pd.read_csv(path)
-        items['id'] = pd.to_numeric(items['id'], errors='coerce')
-        items = items.dropna(subset=['id'])
-        items['id'] = items['id'].astype('int64')
-        items = items.convert_dtypes()
-        return items
+    # def preprocessing_movies(self, path):
+    #     items = pd.read_csv(path)
+    #     items['id'] = pd.to_numeric(items['id'], errors='coerce')
+    #     items = items.dropna(subset=['id'])
+    #     items['id'] = items['id'].astype('int64')
+    #     items['adult'] = items['adult'].map({'True': True, 'False': False})
+    #     items['adult']= items['adult'].astype('bool')
+    #     items = items.convert_dtypes()
+    #     return items
   
     def similarity_matrix_cosine(self):
         """

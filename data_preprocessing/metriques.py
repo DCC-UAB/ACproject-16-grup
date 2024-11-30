@@ -7,25 +7,33 @@ import matplotlib.ticker as ticker
 from ast import literal_eval
 import itertools
 
+import sys
+import os
+script_dir = os.path.dirname(os.path.realpath(__file__))
+parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
+sys.path.append(parent_dir)
+
+from data_preprocessing.preprocessing_csv import movies_metadata, ratings
+
 class preprocessing:
     def __init__(self):
-        self.ratings = pd.read_csv('./datasets/ratings.csv')
+        self.ratings = ratings('./datasets/ratings.csv')
         self.credits = pd.read_csv("./datasets/credits.csv")
-        self.movies = pd.read_csv("./datasets/movies_metadata.csv")
-        self.preprocessing_data()
+        self.movies = movies_metadata("./datasets/movies_metadata.csv")
+        # self.preprocessing_data()
         self.movies = self.movies[self.movies['id'].isin(self.credits['id'])]
-        self.keywords = pd.read_csv("./datasets/keywords.csv")
+        # self.keywords = pd.read_csv("./datasets/keywords.csv")
         # self.links = pd.read_csv("./datasets/links.csv")
 
-    def preprocessing_data(self):
-        self.movies['id'] = pd.to_numeric(self.movies['id'], errors='coerce')
-        self.movies = self.movies.dropna(subset=['id'])
-        self.movies['id'] = self.movies['id'].astype('int64')
-        self.movies = self.movies.convert_dtypes()
-        return self.movies
+    # def preprocessing_data(self):
+    #     self.movies['id'] = pd.to_numeric(self.movies['id'], errors='coerce')
+    #     self.movies = self.movies.dropna(subset=['id'])
+    #     self.movies['id'] = self.movies['id'].astype('int64')
+    #     self.movies = self.movies.convert_dtypes()
+    #     return self.movies
         
     # Funció per mostrar la distribució de les puntuacions    
-    def mostra_distribucio_ratings(self):
+    def display_rating_distribution(self):
         plt.figure(figsize=(10, 6))
         self.ratings['rating'].hist(bins=20, edgecolor='black')
         plt.title('Distribució de Puntuacions')
@@ -36,14 +44,14 @@ class preprocessing:
         plt.show()
 
     # Funció per a analitzar les mètriques de les pel·lícules
-    def analitza_metrics_pellicules(self, min_vots):
+    def movie_metrics(self, min_vots):
         print(f"Total de pel·lícules: {self.movies.shape[0]}\n")
         print(f"Valors nulls a les pel·lícules:\n{self.movies.isnull().sum()}\n")
         print(f"Pel·lícules més votades:\n{self.movies.sort_values('vote_count', ascending=False)[['id','title', 'vote_count', 'vote_average']].head(10)}\n")
         print(f"Pel·lícules amb millor puntuació i més de {min_vots} vots:\n{self.movies[self.movies['vote_count'] > min_vots].sort_values('vote_average', ascending=False)[['id','title', 'vote_count', 'vote_average']].head(10)}\n")
 
     # Funció per mostrar les pel·lícules més valorades segons la puntuació ponderada
-    def mostra_pellicules_mes_valorades(self):
+    def top_rated_movies(self):
         C = self.movies['vote_average'].mean()
         m = self.movies['vote_count'].quantile(0.3)
         self.movies["puntuacio_ponderada"] = (self.movies['vote_count']*self.movies['vote_average'] + C*m) / (self.movies['vote_count'] + m)
@@ -75,7 +83,7 @@ class preprocessing:
         plt.show()
 
     # Funció per comptar pel·lícules per intervals de durada
-    def compta_pellicules_per_durada(self):
+    def movies_runtime_distribution(self):
         mv = self.movies.dropna(subset=['runtime', 'popularity'])
         mv['popularity'] = mv['popularity'].astype(float)
         intervals = [0, 30, 80, 130, np.inf]
@@ -101,7 +109,7 @@ class preprocessing:
         plt.show()
 
     # Funció per analitzar si els directors i actors més populars influeixen en la popularitat de les pel·lícules 
-    def analitza_directors_actors(self):
+    def get_most_popular_cast_crew(self):
         crew = self.credits['crew'].apply(literal_eval)
         cast = self.credits['cast'].apply(literal_eval)
 
@@ -165,13 +173,14 @@ class preprocessing:
     
 if __name__=="__main__":
     p = preprocessing()
-    p.mostra_distribucio_ratings()
-    p.analitza_metrics_pellicules(1000) 
+    p.display_rating_distribution()
+    p.movie_metrics(1000) 
     
-    p.mostra_pellicules_mes_valorades()
+    p.top_rated_movies()
     p.analitza_generes()
-    p.compta_pellicules_per_durada()
+    p.movies_runtime_distribution()
     p.vote_vs_rate()
-    p.analitza_directors_actors()
+    p.get_most_popular_cast_crew()
+
 
 
