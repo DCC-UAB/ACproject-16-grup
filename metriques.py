@@ -7,114 +7,171 @@ import matplotlib.ticker as ticker
 from ast import literal_eval
 import itertools
 
-ratings = pd.read_csv('./datasets/ratings.csv')
-movies = pd.read_csv("./datasets/movies_metadata.csv")
-credits = pd.read_csv("./datasets/credits.csv")
-keywords = pd.read_csv("./datasets/keywords.csv")
+class preprocessing:
+    def __init__(self):
+        self.ratings = pd.read_csv('./datasets/ratings.csv')
+        self.credits = pd.read_csv("./datasets/credits.csv")
+        self.movies = pd.read_csv("./datasets/movies_metadata.csv")
+        self.preprocessing_data()
+        self.movies = self.movies[self.movies['id'].isin(self.credits['id'])]
+        self.keywords = pd.read_csv("./datasets/keywords.csv")
+        # self.links = pd.read_csv("./datasets/links.csv")
 
-# Funció per mostrar la distribució de les puntuacions
-def mostra_distribucio_ratings(ratings):
-    plt.figure(figsize=(10, 6))
-    ratings['rating'].hist(bins=20, edgecolor='black')
-    plt.title('Distribució de Puntuacions')
-    plt.xlabel('Puntuació')
-    plt.ylabel('Nombre de Vots')
-    plt.grid(False)
-    plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x):,}'))
-    plt.show()
+    def preprocessing_data(self):
+        self.movies['id'] = pd.to_numeric(self.movies['id'], errors='coerce')
+        self.movies = self.movies.dropna(subset=['id'])
+        self.movies['id'] = self.movies['id'].astype('int64')
+        self.movies = self.movies.convert_dtypes()
+        return self.movies
+        
+    # Funció per mostrar la distribució de les puntuacions    
+    def mostra_distribucio_ratings(self):
+        plt.figure(figsize=(10, 6))
+        self.ratings['rating'].hist(bins=20, edgecolor='black')
+        plt.title('Distribució de Puntuacions')
+        plt.xlabel('Puntuació')
+        plt.ylabel('Nombre de Vots')
+        plt.grid(False)
+        plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x):,}'))
+        plt.show()
 
-#mostra_distribucio_ratings(ratings)
+    # Funció per a analitzar les mètriques de les pel·lícules
+    def analitza_metrics_pellicules(self, min_vots):
+        print(f"Total de pel·lícules: {self.movies.shape[0]}\n")
+        print(f"Valors nulls a les pel·lícules:\n{self.movies.isnull().sum()}\n")
+        print(f"Pel·lícules més votades:\n{self.movies.sort_values('vote_count', ascending=False)[['id','title', 'vote_count', 'vote_average']].head(10)}\n")
+        print(f"Pel·lícules amb millor puntuació i més de {min_vots} vots:\n{self.movies[self.movies['vote_count'] > min_vots].sort_values('vote_average', ascending=False)[['id','title', 'vote_count', 'vote_average']].head(10)}\n")
 
-# Funció per a analitzar les mètriques de les pel·lícules
-def analitza_metrics_pellicules(movies, min_vots):
-    print(f"Total de pel·lícules: {movies.shape[0]}\n")
-    print(f"Valors nulls a les pel·lícules:\n{movies.isnull().sum()}\n")
-    print(f"Pel·lícules més votades:\n{movies.sort_values('vote_count', ascending=False)[['id','title', 'vote_count', 'vote_average']].head(10)}\n")
-    print(f"Pel·lícules amb millor puntuació i més de {min_vots} vots:\n{movies[movies['vote_count'] > min_vots].sort_values('vote_average', ascending=False)[['id','title', 'vote_count', 'vote_average']].head(10)}\n")
+    # Funció per mostrar les pel·lícules més valorades segons la puntuació ponderada
+    def mostra_pellicules_mes_valorades(self):
+        C = self.movies['vote_average'].mean()
+        m = self.movies['vote_count'].quantile(0.3)
+        self.movies["puntuacio_ponderada"] = (self.movies['vote_count']*self.movies['vote_average'] + C*m) / (self.movies['vote_count'] + m)
+        top20 = self.movies.sort_values('puntuacio_ponderada', ascending=False).drop_duplicates('title').head(20)
+        sns.barplot(x='puntuacio_ponderada', y='title', data=top20, palette='viridis')
+        plt.title('Top 20 Pel·lícules per Puntuació Ponderada', fontsize=16)
+        plt.xlabel('Puntuació Ponderada (PP)', fontsize=12)
+        plt.ylabel('Títol de la Pel·lícula', fontsize=12)
+        min_pp = top20['puntuacio_ponderada'].min()
+        max_pp = top20['puntuacio_ponderada'].max()
+        plt.xlim(min_pp - 0.1, max_pp + 0.1)
+        for index, value in enumerate(top20['puntuacio_ponderada']):
+            plt.text(value - 0.001, index, f'{value:.3f}', color='black', va="center")
 
-#analitza_metrics_pellicules(movies, 1000)
+        plt.gca().xaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
+        plt.show()
+    
+    # Funció per analitzar els gèneres de les pel·lícules
+    def analitza_generes(self):
+        self.movies['genres'] = self.movies['genres'].fillna('[]').apply(literal_eval).apply(lambda x: [i['name'] for i in x] if isinstance(x, list) else [])
+        tots_generes = self.movies['genres'].explode()
+        generes = tots_generes.value_counts().reset_index()
+        generes.columns = ['gènere', 'comptador']
+        plt.figure(figsize=(10, 6))
+        sns.barplot(x='comptador', y='gènere', data=generes, palette='viridis')
+        plt.title('Distribució de Gèneres')
+        plt.xlabel('Nombre de Pel·lícules')
+        plt.ylabel('Gènere')
+        plt.show()
 
-# Funció per mostrar les pel·lícules més valorades segons la puntuació ponderada
-def mostra_pellicules_mes_valorades(movies, C, m):
-    movies["puntuacio_ponderada"] = (movies['vote_count']*movies['vote_average'] + C*m) / (movies['vote_count'] + m)
-    top20 = movies.sort_values('puntuacio_ponderada', ascending=False).drop_duplicates('title').head(20)
-    sns.barplot(x='puntuacio_ponderada', y='title', data=top20, palette='viridis')
-    plt.title('Top 20 Pel·lícules per Puntuació Ponderada', fontsize=16)
-    plt.xlabel('Puntuació Ponderada (PP)', fontsize=12)
-    plt.ylabel('Títol de la Pel·lícula', fontsize=12)
-    min_pp = top20['puntuacio_ponderada'].min()
-    max_pp = top20['puntuacio_ponderada'].max()
-    plt.xlim(min_pp - 0.1, max_pp + 0.1)
-    for index, value in enumerate(top20['puntuacio_ponderada']):
-        plt.text(value - 0.001, index, f'{value:.3f}', color='black', va="center")
-
-    plt.gca().xaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
-    plt.show()
-
-C = movies['vote_average'].mean()
-m = movies['vote_count'].quantile(0.3)
-#mostra_pellicules_mes_valorades(movies, C, m)
-
-# Funció per analitzar els gèneres de les pel·lícules
-def analitza_generes(movies):
-    movies['genres'] = movies['genres'].fillna('[]').apply(literal_eval).apply(lambda x: [i['name'] for i in x] if isinstance(x, list) else [])
-    tots_generes = movies['genres'].explode()
-    generes = tots_generes.value_counts().reset_index()
-    generes.columns = ['gènere', 'comptador']
-    plt.figure(figsize=(10, 6))
-    sns.barplot(x='comptador', y='gènere', data=generes, palette='viridis')
-    plt.title('Distribució de Gèneres')
-    plt.xlabel('Nombre de Pel·lícules')
-    plt.ylabel('Gènere')
-    plt.show()
-
-#analitza_generes(movies)
-
-# Funció per comptar pel·lícules per intervals de durada
-def compta_pellicules_per_durada(movies):
-    mv = movies.dropna(subset=['runtime', 'popularity'])
-    mv['popularity'] = mv['popularity'].astype(float)
-    intervals = [0, 30, 80, 130, np.inf]
-    etiquetes = ['Curmetratge', 'Pel·lícula curta', 'Pel·lícula', 'Pel·lícula llarga']
-    runtime = pd.to_numeric(mv['runtime'], errors='coerce')
-    durada = pd.cut(runtime, bins=intervals, labels=etiquetes, right=False)
-    comptador_intervals = durada.value_counts().sort_index()
-    popularitat_intervals = mv.groupby(durada)['popularity'].mean()
-    popularitat_intervals = mv.groupby(durada)['popularity'].mean()
-    taula_intervals = pd.DataFrame({'Comptador': comptador_intervals,'Popularitat Mitjana': popularitat_intervals})
-    print(taula_intervals)
-
-#compta_pellicules_per_durada(movies)
-
-# Funció per mirar la relació entre la puntuació i el nombre de vots
-def vote_vs_rate(movies):
-    correlacio = movies[['vote_count', 'vote_average']].corr().iloc[0, 1]
-    print(f"Correlació entre Nombre de Vots i Puntuació: {correlacio:.2f}")
-    plt.figure(figsize=(10, 6))
-    sns.scatterplot(x='vote_count', y='vote_average', data=movies, alpha=0.7)
-    plt.title('Puntuació vs Nombre de Vots')
-    plt.xlabel('Nombre de Vots')
-    plt.ylabel('Puntuació')
-    plt.show()
-
-#vote_vs_rate(movies)
+    # Funció per comptar pel·lícules per intervals de durada
+    def compta_pellicules_per_durada(self):
+        mv = self.movies.dropna(subset=['runtime', 'popularity'])
+        mv['popularity'] = mv['popularity'].astype(float)
+        intervals = [0, 30, 80, 130, np.inf]
+        etiquetes = ['Curtmetratge', 'Pel·lícula curta', 'Pel·lícula', 'Pel·lícula llarga']
+        runtime = pd.to_numeric(mv['runtime'], errors='coerce')
+        durada = pd.cut(runtime, bins=intervals, labels=etiquetes, right=False)
+        comptador_intervals = durada.value_counts().sort_index()
+        popularitat_intervals = mv.groupby(durada)['popularity'].mean()
+        popularitat_intervals = mv.groupby(durada)['popularity'].mean()
+        taula_intervals = pd.DataFrame({'Quantitat': comptador_intervals,'Popularitat Mitjana': popularitat_intervals})
+        print(taula_intervals)
 
 
-# Funció per analitzar si els directors i actors més populars influeixen en la popularitat de les pel·lícules 
-def analitza_directors_actors(credits, movies):
-    crew = credits['crew'].apply(literal_eval)
-    cast = credits['cast'].apply(literal_eval)
+    # Funció per mirar la relació entre la puntuació i el nombre de vots
+    def vote_vs_rate(self):
+        correlacio = self.movies[['vote_count', 'vote_average']].corr().iloc[0, 1]
+        print(f"Correlació entre Nombre de Vots i Puntuació: {correlacio:.2f}")
+        plt.figure(figsize=(10, 6))
+        sns.scatterplot(x='vote_count', y='vote_average', data=self.movies, alpha=0.7)
+        plt.title('Puntuació vs Nombre de Vots')
+        plt.xlabel('Nombre de Vots')
+        plt.ylabel('Puntuació')
+        plt.show()
 
-    credits['directors'] = crew.apply(lambda x: [i['name'] for i in x if i['job'] == 'Director'])
-    directors = credits.explode('directors')['directors'].value_counts().reset_index()
-    directors.columns = ['Director', 'Nombre de Pel·lícules']
+    # Funció per analitzar si els directors i actors més populars influeixen en la popularitat de les pel·lícules 
+    def analitza_directors_actors(self):
+        crew = self.credits['crew'].apply(literal_eval)
+        cast = self.credits['cast'].apply(literal_eval)
 
-    credits['actors'] = cast.apply(lambda x: [i['name'] for i in x])
-    actors = credits.explode('actors')['actors'].value_counts().reset_index()
-    actors.columns = ['Actor', 'Nombre de Pel·lícules']    
+        self.credits['directors'] = crew.apply(lambda x: [i['name'] for i in x if i['job'] == 'Director'])
+        directors = self.credits.explode('directors')[['id', 'directors']].dropna(subset=['directors'])
 
-    print(f"Actors més influents:\n{actors.head(10)}\n")
-    print(f"Directors més influents:\n{directors.head(10)}\n")
-    #Falta mirar si aquests apareixen a els millors pel·lícules
+        directors_counts = directors['directors'].value_counts().reset_index()
+        directors_counts.columns = ['Director', 'Nombre de Pel·lícules']
 
-#analitza_directors_actors(credits, movies)
+        directors_ids = directors.groupby('directors')['id'].apply(list).reset_index()
+        directors_ids.columns = ['Director', 'id']
+
+        directors_final = pd.merge(directors_counts, directors_ids, on='Director')
+        top10_directors = directors_final.head(10)
+        
+        
+        self.credits['actors'] = cast.apply(lambda x: [i['name'] for i in x])
+        actors = self.credits.explode('actors')[['id', 'actors']].dropna(subset=['actors'])
+
+        actors_counts = actors['actors'].value_counts().reset_index()
+        actors_counts.columns = ['Actor', 'Nombre de Pel·lícules']
+
+        actors_ids = actors.groupby('actors')['id'].apply(list).reset_index()
+        actors_ids.columns = ['Actor', 'id']
+
+        actors_final = pd.merge(actors_counts, actors_ids, on='Actor')
+        top10_actors = actors_final.head(10)
+        
+        print(f"Actors més influents:\n{top10_actors[['Actor','Nombre de Pel·lícules']]}\n")
+        print(f"Directors més influents:\n{top10_directors[['Director', 'Nombre de Pel·lícules']]}\n")
+        
+        dins_millors_pelis = {}
+        top20 = self.movies.sort_values('puntuacio_ponderada', ascending=False).drop_duplicates('title').head(20)
+        for (_, actor_row), (_, director_row) in zip(top10_actors.iterrows(), top10_directors.iterrows()):
+            dins_millors_pelis[actor_row['Actor']] = ['actor', 0]
+            dins_millors_pelis[director_row['Director']] = ['director', 0]
+            for peli_actor in actor_row['id']:
+                if peli_actor in top20['id'].values:  
+                    dins_millors_pelis[actor_row['Actor']][1] += 1
+            for peli_director in director_row['id']:
+                if peli_director in top20['id'].values:
+                    dins_millors_pelis[director_row['Director']][1] += 1
+        
+        data = {'Nom': [], 'Rol': [], 'Comptador': []}
+        for nom, (rol, comptador) in dins_millors_pelis.items():
+            data['Nom'].append(nom)
+            data['Rol'].append(rol)
+            data['Comptador'].append(comptador)
+
+        df = pd.DataFrame(data)
+
+        # Gràfic de barres
+        plt.figure(figsize=(10, 6))
+        sns.barplot(x='Comptador', y='Nom', hue='Rol', data=df, palette='viridis')
+        plt.title('Actors i Directors més repetits a les 20 pel·lícules més votades', fontsize=16)
+        plt.xlabel('Nombre de Vegades a les 20 Millors Pel·lícules', fontsize=12)
+        plt.ylabel('Nom', fontsize=12)
+        plt.legend(title='Rol', loc='upper right')
+        plt.show()
+
+    
+if __name__=="__main__":
+    p = preprocessing()
+    p.mostra_distribucio_ratings()
+    p.analitza_metrics_pellicules(1000) 
+    
+    p.mostra_pellicules_mes_valorades()
+    p.analitza_generes()
+    p.compta_pellicules_per_durada()
+    p.vote_vs_rate()
+    p.analitza_directors_actors()
+
+
