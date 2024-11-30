@@ -10,11 +10,19 @@ import itertools
 class preprocessing:
     def __init__(self):
         self.ratings = pd.read_csv('./datasets/ratings.csv')
-        self.movies = pd.read_csv("./datasets/movies_metadata.csv")#, dtype={'id':'int64'})
         self.credits = pd.read_csv("./datasets/credits.csv")
+        self.movies = pd.read_csv("./datasets/movies_metadata.csv")
+        self.preprocessing_data()
         self.keywords = pd.read_csv("./datasets/keywords.csv")
         # self.links = pd.read_csv("./datasets/links.csv")
 
+    def preprocessing_data(self):
+        self.movies['id'] = pd.to_numeric(self.movies['id'], errors='coerce')
+        self.movies = self.movies.dropna(subset=['id'])
+        self.movies['id'] = self.movies['id'].astype('int64')
+        self.movies = self.movies.convert_dtypes()
+        self.movies = self.movies[self.movies['id'].isin(self.credits['id'])]
+        
     # Funció per mostrar la distribució de les puntuacions    
     def mostra_distribucio_ratings(self):
         plt.figure(figsize=(10, 6))
@@ -34,7 +42,9 @@ class preprocessing:
         print(f"Pel·lícules amb millor puntuació i més de {min_vots} vots:\n{self.movies[self.movies['vote_count'] > min_vots].sort_values('vote_average', ascending=False)[['id','title', 'vote_count', 'vote_average']].head(10)}\n")
 
     # Funció per mostrar les pel·lícules més valorades segons la puntuació ponderada
-    def mostra_pellicules_mes_valorades(self, C, m):
+    def mostra_pellicules_mes_valorades(self):
+        C = self.movies['vote_average'].mean()
+        m = self.movies['vote_count'].quantile(0.3)
         self.movies["puntuacio_ponderada"] = (self.movies['vote_count']*self.movies['vote_average'] + C*m) / (self.movies['vote_count'] + m)
         top20 = self.movies.sort_values('puntuacio_ponderada', ascending=False).drop_duplicates('title').head(20)
         sns.barplot(x='puntuacio_ponderada', y='title', data=top20, palette='viridis')
@@ -49,7 +59,7 @@ class preprocessing:
 
         plt.gca().xaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
         plt.show()
-
+    
     # Funció per analitzar els gèneres de les pel·lícules
     def analitza_generes(self):
         self.movies['genres'] = self.movies['genres'].fillna('[]').apply(literal_eval).apply(lambda x: [i['name'] for i in x] if isinstance(x, list) else [])
@@ -95,27 +105,69 @@ class preprocessing:
         cast = self.credits['cast'].apply(literal_eval)
 
         self.credits['directors'] = crew.apply(lambda x: [i['name'] for i in x if i['job'] == 'Director'])
-        directors = self.credits.explode('directors')['directors'].value_counts().reset_index()
-        directors.columns = ['Director', 'Nombre de Pel·lícules']
+        directors = self.credits.explode('directors')[['id', 'directors']].dropna(subset=['directors'])
 
-        self.credits['actors'] = cast.apply(lambda x: [i['name'] for i in x])
-        actors = self.credits.explode('actors')['actors'].value_counts().reset_index()
-        actors.columns = ['Actor', 'Nombre de Pel·lícules']    
+        directors_counts = directors['directors'].value_counts().reset_index()
+        directors_counts.columns = ['Director', 'Nombre de Pel·lícules']
 
-        print(f"Actors més influents:\n{actors.head(10)}\n")
-        print(f"Directors més influents:\n{directors.head(10)}\n")
+        directors_ids = directors.groupby('directors')['id'].apply(list).reset_index()
+        directors_ids.columns = ['Director', 'id']
+
+        directors_final = pd.merge(directors_counts, directors_ids, on='Director')
+        top10_directors = directors_final.head(10)
         
-        #Falta mirar si aquests apareixen a els millors pel·lícules
-    
+        
+        self.credits['actors'] = cast.apply(lambda x: [i['name'] for i in x])
+        actors = self.credits.explode('actors')[['id', 'actors']].dropna(subset=['actors'])
 
+        actors_counts = actors['actors'].value_counts().reset_index()
+        actors_counts.columns = ['Actor', 'Nombre de Pel·lícules']
+
+        actors_ids = actors.groupby('actors')['id'].apply(list).reset_index()
+        actors_ids.columns = ['Actor', 'id']
+
+        actors_final = pd.merge(actors_counts, actors_ids, on='Actor')
+        top10_actors = actors_final.head(10)
+        
+        print(f"Actors més influents:\n{top10_actors[['Actor','Nombre de Pel·lícules']]}\n")
+        print(f"Directors més influents:\n{top10_directors[['Director', 'Nombre de Pel·lícules']]}\n")
+        
+        dins_millors_pelis = {}
+        top20 = self.movies.sort_values('puntuacio_ponderada', ascending=False).drop_duplicates('title').head(20)
+        for (_, actor_row), (_, director_row) in zip(top10_actors.iterrows(), top10_directors.iterrows()):
+            dins_millors_pelis[actor_row['Actor']] = ['actor', 0]
+            dins_millors_pelis[director_row['Director']] = ['director', 0]
+            for peli_actor in actor_row['id']:
+                if peli_actor in top20['id'].values:  
+                    dins_millors_pelis[actor_row['Actor']][1] += 1
+            for peli_director in director_row['id']:
+                if peli_director in top20['id'].values:
+                    dins_millors_pelis[director_row['Director']][1] += 1
+        
+        data = {'Nom': [], 'Rol': [], 'Comptador': []}
+        for nom, (rol, comptador) in dins_millors_pelis.items():
+            data['Nom'].append(nom)
+            data['Rol'].append(rol)
+            data['Comptador'].append(comptador)
+
+        df = pd.DataFrame(data)
+
+        # Gràfic de barres
+        plt.figure(figsize=(10, 6))
+        sns.barplot(x='Comptador', y='Nom', hue='Rol', data=df, palette='viridis')
+        plt.title('Actors i Directors més repetits a les 20 pel·lícules més votades', fontsize=16)
+        plt.xlabel('Nombre de Vegades a les 20 Millors Pel·lícules', fontsize=12)
+        plt.ylabel('Nom', fontsize=12)
+        plt.legend(title='Rol', loc='upper right')
+        plt.show()
+
+    
 if __name__=="__main__":
     p = preprocessing()
     p.mostra_distribucio_ratings()
     p.analitza_metrics_pellicules(1000) 
     
-    C = p.movies['vote_average'].mean()
-    m = p.movies['vote_count'].quantile(0.3)
-    p.mostra_pellicules_mes_valorades(C, m)
+    p.mostra_pellicules_mes_valorades()
     p.analitza_generes()
     p.compta_pellicules_per_durada()
     p.vote_vs_rate()
