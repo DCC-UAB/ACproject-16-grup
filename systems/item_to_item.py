@@ -96,7 +96,12 @@ class ItemItemRecommender:
         return recommended_items_info
 
 if __name__ == '__main__':
+    user_id = 1
+    # recommender = ItemItemRecommender()
+    # recs_cos = recommender.recommend_for_user(user_id, similarity='Cosine',top_n=3)
+    # print('Recomanacions cosinus:\n',recs_cos)
+    
     recommender = ItemItemRecommender()
-    recs = recommender.recommend_for_user(user_id=1, similarity='Pearson',top_n=3)
-    print(recs)
+    recs_pear = recommender.recommend_for_user(user_id, similarity='Pearson',top_n=3)
+    print('\nRecomanacions pearson:\n',recs_pear)
     
