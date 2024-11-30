@@ -1,5 +1,6 @@
 import pandas as pd
 import ast
+import time
 
 def movies_metadata(path):
         items = pd.read_csv(path)
@@ -56,3 +57,41 @@ def credits(path, path_movies='./datasets/movies_metadata.csv'):
 
         
         return cast, credits
+
+if __name__ == '__main__':
+        credits = pd.read_csv('./datasets/credits.csv')
+        keywords = pd.read_csv('./datasets/keywords.csv')
+        links = pd.read_csv('./datasets/links.csv')
+        links_small = pd.read_csv('./datasets/links_small.csv')
+        movies = movies_metadata('./datasets/movies_metadata.csv')
+        ratings = ratings('./datasets/ratings.csv')
+        ratings_small = pd.read_csv('./datasets/ratings_small.csv')
+
+
+        print('CREDITS\n')
+        print(credits.info())
+        time.sleep(5)
+
+        print('\n\nKEYWORDS\n',)
+        print(keywords.info())
+        time.sleep(5)
+
+        print('\n\nLINKS\n')
+        print(links.info())
+        time.sleep(5)
+
+        print('\n\nLINKS_SMALL\n',)
+        print(links_small.info())
+        time.sleep(5)
+
+        print('\n\nMOVIES\n')
+        print(movies.info())
+        time.sleep(5)
+
+        print('\n\nRATINGS\n')
+        print(ratings.info())
+        time.sleep(5)
+
+        print('\n\nRATINGS_SMALL\n')
+        print(ratings_small.info())
+        time.sleep(5)
