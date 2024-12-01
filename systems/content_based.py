@@ -1,10 +1,16 @@
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data_preprocessing')))
+script_dir = os.path.dirname(os.path.realpath(__file__))
+parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
+sys.path.append(parent_dir)
 
-from preprocessing_csv import movies_metadata, ratings
+from data_preprocessing.preprocessing_csv import movies_metadata, ratings, credits
 import pandas as pd
 
+movies = movies_metadata('./datasets/movies_metadata.csv')
+rates = ratings('./datasets/ratings.csv')
+cast, credit = credits('./datasets/credits.csv')
 
-print(movies_metadata('./datasets/movies_metadata.csv').head(1))
-print(ratings('./datasets/ratings.csv').head(1))
+print(movies.head(3))
+print(rates.head(3))
+print(credit.head(3))
