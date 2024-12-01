@@ -142,15 +142,15 @@ class preprocessing:
         print(f"Directors més influents:\n{top10_directors[['Director', 'Nombre de Pel·lícules']]}\n")
         
         dins_millors_pelis = {}
-        top20 = self.movies.sort_values('puntuacio_ponderada', ascending=False).drop_duplicates('title').head(20)
+        top250 = self.movies.sort_values('puntuacio_ponderada', ascending=False).drop_duplicates('title').head(250)
         for (_, actor_row), (_, director_row) in zip(top10_actors.iterrows(), top10_directors.iterrows()):
             dins_millors_pelis[actor_row['Actor']] = ['actor', 0]
             dins_millors_pelis[director_row['Director']] = ['director', 0]
             for peli_actor in actor_row['id']:
-                if peli_actor in top20['id'].values:  
+                if peli_actor in top250['id'].values:  
                     dins_millors_pelis[actor_row['Actor']][1] += 1
             for peli_director in director_row['id']:
-                if peli_director in top20['id'].values:
+                if peli_director in top250['id'].values:
                     dins_millors_pelis[director_row['Director']][1] += 1
         
         data = {'Nom': [], 'Rol': [], 'Comptador': []}
@@ -164,8 +164,8 @@ class preprocessing:
         # Gràfic de barres
         plt.figure(figsize=(10, 6))
         sns.barplot(x='Comptador', y='Nom', hue='Rol', data=df, palette='viridis')
-        plt.title('Actors i Directors més repetits a les 20 pel·lícules més votades', fontsize=16)
-        plt.xlabel('Nombre de Vegades a les 20 Millors Pel·lícules', fontsize=12)
+        plt.title('Actors i Directors més repetits a les 250 pel·lícules més votades', fontsize=16)
+        plt.xlabel('Nombre de Vegades a les 250 Millors Pel·lícules', fontsize=12)
         plt.ylabel('Nom', fontsize=12)
         plt.legend(title='Rol', loc='upper right')
         plt.show()
