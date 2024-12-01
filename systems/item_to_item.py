@@ -58,9 +58,9 @@ class ItemItemRecommender:
         :return: DataFrame amb els articles més similars
         """
         if self.item_similarity is None:
-            if similarity is 'Cosine':
+            if similarity == 'Cosine':
                 self.similarity_matrix_cosine()
-            elif similarity is 'Pearson':
+            elif similarity == 'Pearson':
                 self.similarity_matrix_pearson()
             else:
                 raise ValueError("Métode desconegut: només 'Cosine' o 'Pearson' són vàlids.")

@@ -2,19 +2,35 @@ import pandas as pd
 import ast
 import time
 
-def movies_metadata(path):
-        items = pd.read_csv(path)
-        items['id'] = pd.to_numeric(items['id'], errors='coerce')
-        items = items.dropna(subset=['id'])
-        items['id'] = items['id'].astype('int64')
+PATH_MOVIES = './datasets/movies_metadata.csv'
+PATH_RATINGS = './datasets/ratings.csv'
+PATH_RATINGS_SMALL = './datasets/ratings_small.csv'
+PATH_CREDITS = './datasets/credits.csv'
+PATH_KEYWORDS = './datasets/keywords.csv'
+PATH_LINKS = './datasets/links.csv'
+PATH_LINKS_SMALL = './datasets/links_small.csv'
+
+ID = 'id'
+
+def movies_metadata(path=PATH_MOVIES):
+        items = pd.read_csv(path, low_memory=False)
+        items[ID] = pd.to_numeric(items[ID], errors='coerce')
+        items = items.dropna(subset=[ID])
+        items[ID] = items[ID].astype('int64')
+        
         items['adult'] = items['adult'].map({'True': True, 'False': False})
         items['adult']= items['adult'].astype('bool')
+        
+        items['belongs_to_collection'] = items['belongs_to_collection'].fillna('{}')
+        items['belongs_to_collection'] = items['belongs_to_collection'].apply(ast.literal_eval)
+        items['belongs_to_collection'] = items['belongs_to_collection'].apply(lambda x: None if x == {} else x)
+        
         items = items.convert_dtypes()
         return items
     
-def ratings(path):
+def ratings(path=PATH_RATINGS):
         ratings = pd.read_csv(path)
-        ratings = ratings.rename(columns={'userId':'user', 'movieId':'id'})
+        ratings = ratings.rename(columns={'userId':'user', 'movieId':ID})
         ratings.timestamp = pd.to_datetime(ratings.timestamp, unit='s')
         return ratings
 
@@ -22,76 +38,84 @@ def ratings(path):
 def convert_to_dict_list(string):
         return ast.literal_eval(string)
 
-
-# TODO: Implementar la funció credits, on es desglossaran les dades de la columna 'cast' i 'crew' del fitxer 'credits.csv'
-def credits(path, path_movies='./datasets/movies_metadata.csv'):
+def credits(path, path_movies=PATH_MOVIES):
         movies = movies_metadata(path_movies)
         credits = pd.read_csv(path)
-        # credits['id'] = pd.to_numeric(credits['id'], errors='coerce')
-        # credits = credits.dropna(subset=['id'])
-        # credits['id'] = credits['id'].astype('int64')
-        # credits = credits.convert_dtypes()
-        id_movies = set(movies['id'])
-        credits = credits[credits['id'].isin(id_movies)]
 
-        # Convertir la columna 'cast' en llistes de diccionaris
+        id_movies = set(movies[ID])
+
+        credits = credits[credits[ID].isin(id_movies)]
+
         credits['cast'] = credits['cast'].apply(convert_to_dict_list)
+        credits['crew'] = credits['crew'].apply(convert_to_dict_list)
 
-        # Crear un nou DataFrame per emmagatzemar les files desglossades
-        cast = pd.DataFrame()
+        cast_rows = []
+        crew_rows = []
 
-        # Iterar sobre cada línia del DataFrame original
-        for index, row in credits.iterrows():
-                # Obtenir la llista de diccionaris per a la columna 'cast'
-                cast_list = row['cast']
+        for _,row in credits.iterrows():
+                for cast_member in row.cast:
+                        cast_member['movie_id'] = row[ID]
+                        cast_rows.append(cast_member)
                 
-                # Afegir l'ID de la pel·lícula a cada element de la llista 'cast'
-                for cast_member in cast_list:
-                        cast_member['movie_id'] = row['id']  # Afegir l'ID original de la pel·lícula
-                        
-                # Afegir els diccionaris de la llista 'cast' com noves files al nou DataFrame
-                cast = pd.concat([cast, pd.DataFrame(cast_list)], ignore_index=True)
+                for crew_member in row.crew:
+                        crew_member['movie_id'] = row[ID]
+                        crew_rows.append(crew_member)
 
-        # Mostrar el nou DataFrame
-        print(cast)
-
+        cast = pd.DataFrame(cast_rows)
+        crew = pd.DataFrame(crew_rows)
         
-        return cast, credits
+        return cast.convert_dtypes(), crew.convert_dtypes()
+
+def keywords(path=PATH_KEYWORDS):
+        keywords = pd.read_csv(path)
+        keywords['keywords'] = keywords['keywords'].apply(convert_to_dict_list)
+        keywords_rows = []
+        
+        for _, row in keywords.iterrows():
+                for keyword in row.keywords:
+                        keyword['movie_id'] = row[ID]
+                        keywords_rows.append(keyword)
+        
+        return pd.DataFrame(keywords_rows).convert_dtypes()
+
+def links(path=PATH_LINKS):
+        return pd.read_csv(path)
 
 if __name__ == '__main__':
-        credits = pd.read_csv('./datasets/credits.csv')
-        keywords = pd.read_csv('./datasets/keywords.csv')
-        links = pd.read_csv('./datasets/links.csv')
-        links_small = pd.read_csv('./datasets/links_small.csv')
-        movies = movies_metadata('./datasets/movies_metadata.csv')
-        ratings = ratings('./datasets/ratings.csv')
-        ratings_small = pd.read_csv('./datasets/ratings_small.csv')
+        cast, crew = credits(PATH_CREDITS, PATH_MOVIES)
+        keywords = keywords(PATH_KEYWORDS)
+        links = links(PATH_LINKS)
+        # links_small = links(PATH_LINKS_SMALL)
+        movies = movies_metadata(PATH_MOVIES)
+        ratings = ratings(PATH_RATINGS)
+        # ratings_small = ratings(PATH_RATINGS_SMALL)
 
+        # print('CREDITS\n')
+        # print(cast.info())
+        # time.sleep(5)
+        # print(crew.info())
+        # time.sleep(5)
 
-        print('CREDITS\n')
-        print(credits.info())
-        time.sleep(5)
+        # print('\n\nKEYWORDS\n',)
+        # print(keywords.info())
+        # time.sleep(5)
 
-        print('\n\nKEYWORDS\n',)
-        print(keywords.info())
-        time.sleep(5)
+        # print('\n\nLINKS\n')
+        # print(links.info())
+        # time.sleep(5)
 
-        print('\n\nLINKS\n')
-        print(links.info())
-        time.sleep(5)
+        # print('\n\nLINKS_SMALL\n',)
+        # print(links_small.info())
+        # time.sleep(5)
 
-        print('\n\nLINKS_SMALL\n',)
-        print(links_small.info())
-        time.sleep(5)
+        # print('\n\nMOVIES\n')
+        # print(movies.info())
+        # time.sleep(5)
 
-        print('\n\nMOVIES\n')
-        print(movies.info())
-        time.sleep(5)
+        # print('\n\nRATINGS\n')
+        # print(ratings.info())
+        # time.sleep(5)
 
-        print('\n\nRATINGS\n')
-        print(ratings.info())
-        time.sleep(5)
-
-        print('\n\nRATINGS_SMALL\n')
-        print(ratings_small.info())
-        time.sleep(5)
+        # print('\n\nRATINGS_SMALL\n')
+        # print(ratings_small.info())
+        # time.sleep(5)
