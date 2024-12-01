@@ -26,7 +26,12 @@ Explicació superficial del codi:
 - Fer la funció de prediccions que consisteix en calcular les similituds amb els altres usuaris i predir quina valoració tindrà aquella pel·lícula en concret, utilitzant la fórmula mostrada a classe. 
 
 ---
+**item_to_item.py:**
+Hem creat i fet la primera versió de recomanador col·laboratiu basat en items. 
+
 ---
+**content_based.py:**
+Hem creat i fet la primera versió de recomanador basat en contingut. 
 
 
 
