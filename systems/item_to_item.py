@@ -8,14 +8,15 @@ script_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
 sys.path.append(parent_dir)
 
-from data_preprocessing.preprocessing_csv import preprocessing_movies, preprocessing_ratings
+from data_preprocessing.preprocessing_csv import movies_metadata, ratings
+
 class ItemItemRecommender:
     def __init__(self):
         """
         Inicialitza el sistema de recomanació amb les dades de valoracions i articles.
         """
-        self.ratings = preprocessing_ratings('./datasets/ratings_small.csv')
-        self.items = preprocessing_movies('./datasets/movies_metadata.csv')
+        self.ratings = ratings('./datasets/ratings_small.csv')
+        self.items = movies_metadata('./datasets/movies_metadata.csv')
         self.item_similarity = None
     
     # def read_ratings(self, path):
