@@ -25,10 +25,16 @@ def movies_metadata(path=PATH_MOVIES):
         items['belongs_to_collection'] = items['belongs_to_collection'].apply(ast.literal_eval)
         items['belongs_to_collection'] = items['belongs_to_collection'].apply(lambda x: None if x == {} else x)
         
+        # TODO: genres, production_companies, production_countries, spoken_languages
+        items['genres'] = items['genres'].fillna('[]').apply(ast.literal_eval)
+        items['production_companies'] = items['production_companies'].fillna('[]').apply(ast.literal_eval)
+        items['production_countries'] = items['production_countries'].fillna('[]').apply(ast.literal_eval)
+        items['spoken_languages'] = items['spoken_languages'].fillna('[]').apply(ast.literal_eval)
+        
         items = items.convert_dtypes()
         return items
     
-def ratings(path=PATH_RATINGS):
+def data_ratings(path=PATH_RATINGS):
         ratings = pd.read_csv(path)
         ratings = ratings.rename(columns={'userId':'user', 'movieId':ID})
         ratings.timestamp = pd.to_datetime(ratings.timestamp, unit='s')
@@ -81,14 +87,20 @@ def keywords(path=PATH_KEYWORDS):
 def links(path=PATH_LINKS):
         return pd.read_csv(path)
 
-if __name__ == '__main__':
-        cast, crew = credits(PATH_CREDITS, PATH_MOVIES)
-        keywords = keywords(PATH_KEYWORDS)
-        links = links(PATH_LINKS)
-        # links_small = links(PATH_LINKS_SMALL)
+def small_ratings():
+        ratings = data_ratings(PATH_RATINGS_SMALL)
         movies = movies_metadata(PATH_MOVIES)
-        ratings = ratings(PATH_RATINGS)
-        # ratings_small = ratings(PATH_RATINGS_SMALL)
+        movies = movies[movies[ID].isin(ratings[ID])]
+        return ratings, movies
+
+if __name__ == '__main__':
+        # cast, crew = credits(PATH_CREDITS, PATH_MOVIES)
+        # keywords = keywords(PATH_KEYWORDS)
+        # links = links(PATH_LINKS)
+        # links_small = links(PATH_LINKS_SMALL)
+        # movies = movies_metadata(PATH_MOVIES)
+        # ratings = data_ratings(PATH_RATINGS)
+        ratings_small = small_ratings()
 
         # print('CREDITS\n')
         # print(cast.info())
