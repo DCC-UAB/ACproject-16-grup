@@ -53,9 +53,7 @@ def credits(path, path_movies='./datasets/movies_metadata.csv'):
                 cast = pd.concat([cast, pd.DataFrame(cast_list)], ignore_index=True)
 
         # Mostrar el nou DataFrame
-        print(cast)
-
-        
+        #print(cast)
         return cast, credits
 
 if __name__ == '__main__':
