@@ -75,14 +75,9 @@ def credits(path, path_movies=PATH_MOVIES):
 def keywords(path=PATH_KEYWORDS):
         keywords = pd.read_csv(path)
         keywords['keywords'] = keywords['keywords'].apply(convert_to_dict_list)
-        keywords_rows = []
-        
-        for _, row in keywords.iterrows():
-                for keyword in row.keywords:
-                        keyword['movie_id'] = row[ID]
-                        keywords_rows.append(keyword)
-        
-        return pd.DataFrame(keywords_rows).convert_dtypes()
+        keywords['keywords_id'] = keywords['keywords'].apply(lambda x: [d['id'] for d in x])
+        keywords['keywords'] = keywords['keywords'].apply(lambda x: [d['name'] for d in x])
+        return keywords
 
 def links(path=PATH_LINKS):
         return pd.read_csv(path)
