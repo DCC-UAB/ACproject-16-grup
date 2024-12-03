@@ -10,8 +10,6 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 
-
-
 class ContentBasedRecomender:
     def __init__(self):
         """
@@ -47,15 +45,14 @@ class ContentBasedRecomender:
         
         return tfidf_matrix
     
-    def find_similar(self, tfidf_matrix, title, n):
+    def find_similar(self, title, n, sim):
         """
-        Funció per recomanar utilitzant el coeficient de Pearson.
+        Funció per obtenir els mes similars a una pelicula
         """
         index = pd.Series(self.movies.index, index=self.movies.title).drop_duplicates()
         idx = index[title]
-        tfidf_array = tfidf_matrix.toarray()
-        pearson_sim = np.corrcoef(tfidf_array)
-        sim_score = list(enumerate(pearson_sim[idx]))
+        
+        sim_score = list(enumerate(sim[idx]))
         sim_score = sorted(sim_score, key=lambda x: x[1], reverse=True)
         recommended_idx = [i[0] for i in sim_score][1:n+1]
         return pd.DataFrame(self.movies['title'].iloc[recommended_idx])
@@ -67,6 +64,13 @@ if __name__ == '__main__':
     recomender = ContentBasedRecomender()
     recomender.merge_data()
     tfidf_matrix = recomender.tfidf()
-    r=recomender.find_similar(tfidf_matrix, "Casino", 10)
-    
+    #Coficient de Pearson
+    tfidf_array = tfidf_matrix.toarray()
+    pearson_sim = np.corrcoef(tfidf_array)
+    r=recomender.find_similar("Casino", 10, pearson_sim)
+    print(r)
+
+    #Distància cosinus
+    cosine_sim = linear_kernel(tfidf_matrix)
+    r=recomender.find_similar("Casino", 10, cosine_sim)
     print(r)
