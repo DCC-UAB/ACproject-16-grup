@@ -8,6 +8,8 @@ from data_preprocessing.preprocessing_csv import small_ratings, keywords
 import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import linear_kernel
+
 
 
 class ContentBasedRecomender:
@@ -24,7 +26,7 @@ class ContentBasedRecomender:
 
     def merge_data(self):
         """
-        Afegir les keywords a les dades de les pel·lícules.
+        Merge: Afegeix les keywords, el cast i el crew a les dades de les pel·lícules.
         """
         key = keywords("./datasets/keywords.csv")
         self.movies = pd.merge(self.movies, key, on='id', how='left')
@@ -33,9 +35,30 @@ class ContentBasedRecomender:
         self.movies = pd.merge(self.movies, self.credits, on='id', how='left')
 
 
- 
-
-
+    def tfidf(self):
+        """
+        Crea una matriu TF-IDF per a un conjunt de dades.
+        :param column: Nom de la columna per a la qual es vol crear la matriu.
+        :return: Matriu TF-IDF
+        """
+        tfidf = TfidfVectorizer(stop_words='english')
+        self.movies['overview'] = self.movies['overview'].fillna('')
+        tfidf_matrix = tfidf.fit_transform(self.movies["overview"])
+        
+        return tfidf_matrix
+    
+    def find_similar(self, tfidf_matrix, title, n):
+        """
+        Funció per recomanar utilitzant el coeficient de Pearson.
+        """
+        index = pd.Series(self.movies.index, index=self.movies.title).drop_duplicates()
+        idx = index[title]
+        tfidf_array = tfidf_matrix.toarray()
+        pearson_sim = np.corrcoef(tfidf_array)
+        sim_score = list(enumerate(pearson_sim[idx]))
+        sim_score = sorted(sim_score, key=lambda x: x[1], reverse=True)
+        recommended_idx = [i[0] for i in sim_score][1:n+1]
+        return pd.DataFrame(self.movies['title'].iloc[recommended_idx])
 
 
 
@@ -43,5 +66,7 @@ class ContentBasedRecomender:
 if __name__ == '__main__':
     recomender = ContentBasedRecomender()
     recomender.merge_data()
-    print(recomender.movies.columns)
-    user_id = 1 
+    tfidf_matrix = recomender.tfidf()
+    r=recomender.find_similar(tfidf_matrix, "Casino", 10)
+    
+    print(r)
