@@ -134,10 +134,6 @@ class UserUserRecommender:
                 # Depuració per veure el que estem predint
                 print(f"Usuari {user_id} - Pel·lícula {movie_id} -> Predicció: {pred_rating}")
 
-        print("Matriu de recomanacions:")
-        for user, recommendations in recommendation_matrix.items():
-            print(f"Usuari {user}: {recommendations}")
-
         return recommendation_matrix
     
 
@@ -160,6 +156,7 @@ if __name__ == "__main__":
     # Generar la matriu de recomanacions per a tots els usuaris
     recommendation_matrix = recommender.generate_recommendation_matrix(topN=3, method='cosine')
 
+    '''
     # Mostrar els resultats de la matriu de recomanacions
     print("\nMatriu de recomanacions:")
     for user_id, recommendations in recommendation_matrix.items():
@@ -167,27 +164,4 @@ if __name__ == "__main__":
         sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
         for movie_id, predicted_rating in sorted_recommendations:
             print(f"  Pel·lícula {movie_id}: {predicted_rating:.2f}")
-
-
-
-
-    '''
-    # Prova de la matriu de recomanacions per a tots els usuaris
-    recommendation_matrix = recomender.generate_recommendation_matrix(topN=5, method='cosine')
-    
-    # Mostrem la matriu de recomanacions per a la depuració
-    #print("\nMatriu de recomanacions:")
-    #for user_id, recommendations in recommendation_matrix.items():
-    #    print(f"\nUsuari {user_id}:")
-    #    for movie_id, rating in recommendations.items():
-    #        print(f"Pel·lícula ID: {movie_id}, Predicció de valoració: {rating}")
-
-    # Mostrem les recomanacions per alguns usuaris (per exemple, usuaris 1 i 2)
-    print("\nRecomanacions per a l'usuari 1:")
-    for movie_id, rating in recommendation_matrix[1].items():
-        print(f"Pel·lícula ID: {movie_id}, Predicció de valoració: {rating}")
-
-    print("\nRecomanacions per a l'usuari 2:")
-    for movie_id, rating in recommendation_matrix[2].items():
-        print(f"Pel·lícula ID: {movie_id}, Predicció de valoració: {rating}")
     '''

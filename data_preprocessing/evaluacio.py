@@ -169,28 +169,32 @@ class Evaluation:
             'NDCG': ndcg
         }
 
-recommender = UserUserRecommender()
-recommender.load_data('./datasets/ratings_small.csv')
 
-ratings_df = pd.read_csv('./datasets/ratings_small.csv')
+if __name__ == "__main__":
+    ratings_df = pd.read_csv('./datasets/ratings_small.csv')
 
-ground_truth = {}
-for _, row in ratings_df.iterrows():
-    user_id = row['userId']
-    movie_id = row['movieId']
-    rating = row['rating']
-    
-    if user_id not in ground_truth:
-        ground_truth[user_id] = {}
-    
-    ground_truth[user_id][movie_id] = rating
+    recommender = UserUserRecommender()
 
-# Inicialitzar l'evaluador
-evaluator = Evaluation(recommender, ground_truth)
+    ratings_df = pd.read_csv('./datasets/ratings_small.csv')
 
-# Generar les prediccions
-predictions = evaluator.generate_predictions(method='cosine', topN=10)
+    ground_truth = {}
+    for _, row in ratings_df.iterrows():
+        user_id = row['userId']
+        movie_id = row['movieId']
+        rating = row['rating']
+        
+        if user_id not in ground_truth:
+            ground_truth[user_id] = {}
+        
+        ground_truth[user_id][movie_id] = rating
 
-# Avaluar el sistema
-evaluation_metrics = evaluator.evaluate(method='cosine', topN=10)
-print(evaluation_metrics)
+    # Inicialitzar l'evaluador
+    evaluator = Evaluation(recommender, ground_truth)
+
+    # Generar les prediccions
+    predictions = evaluator.generate_predictions(method='cosine', topN=10)
+
+    # Avaluar el sistema
+    evaluation_metrics = evaluator.evaluate(method='cosine', topN=10)
+
+    print(evaluation_metrics)
