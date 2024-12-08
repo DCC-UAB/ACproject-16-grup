@@ -18,7 +18,7 @@
 ### **SETMANA 2**
 - **recomanadors:**
     1. completar i  millorar les funcions de `SVD`, `item_to_item`, `user_to_user` i `content_based`.
-    2. implementar una primera versió del `main`.
+    2. implementar una primera versió del `main`. Tenir el primer model funcional del 4 models de recomanació.
 
 - **comtemplacions:**
     1. distribució i funcionalitat dels recomanadors que no estàn plantejats per tenir train-test
