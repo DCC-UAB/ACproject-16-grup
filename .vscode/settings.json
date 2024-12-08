@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./systems",
+        "./data_preprocessing"
+    ]
+}
