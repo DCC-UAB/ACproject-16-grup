@@ -1,12 +1,6 @@
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
-import sys
-import os
-script_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
-sys.path.append(parent_dir)
-
 from data_preprocessing.preprocessing_csv import small_ratings
 
 class ItemItemRecommender:
@@ -83,13 +77,18 @@ class ItemItemRecommender:
         
         recommended_items = pd.Series(recommendations).sort_values(ascending=False).head(top_n)
         
-        recommended_items_info = self.items.loc[recommended_items.index] # TODO: check error
-        recommended_items_info['score'] = recommended_items.values
-        
-        return recommended_items_info
+        if not recommended_items.index.empty:
+            for idx in recommended_items.index:
+                if idx in self.items.index:
+                    recommended_items_info = self.items.loc[idx]
+                    recommended_items_info['score'] = recommended_items.loc[idx]
+                    return recommended_items_info
+                else:
+                    print(f"Warning: Article {idx} no trobat a la base de dades de pel·lícules.")        
+        return None
 
 if __name__ == '__main__':
-    user_id = 1
+    user_id = 2
     recommender = ItemItemRecommender()
     recs_cos = recommender.recommend_for_user(user_id, similarity='Cosine',top_n=3)
     print('Recomanacions cosinus:\n',recs_cos)

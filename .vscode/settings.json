@@ -1,7 +1,11 @@
 {
     "python.analysis.extraPaths": [
-        // "./systems",
-        // "./data_preprocessing",
-        "ACproject-16-grup/"
+        "./systems",
+        "./data_preprocessing",
+        // "ACproject-16-grup/"
     ]
 }
+
+// executar a terminal:
+//     python -m pip install -r requirements.txt
+//     export PYTHONPATH=$(pwd)
