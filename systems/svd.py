@@ -1,7 +1,4 @@
-from surprise import SVD
-from surprise import Dataset
-from surprise import Reader
-from surprise.model_selection import train_test_split
+from surprise import SVD, Dataset, Reader, train_test_split
 
 # Carrega les dades
 ratings = pd.read_csv("../datasets/ratings_small.csv")

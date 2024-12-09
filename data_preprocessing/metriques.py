@@ -7,17 +7,11 @@ import matplotlib.ticker as ticker
 from ast import literal_eval
 import itertools
 
-import sys
-import os
-script_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
-sys.path.append(parent_dir)
-
-from data_preprocessing.preprocessing_csv import movies_metadata, ratings
+from data_preprocessing.preprocessing_csv import movies_metadata, data_ratings
 
 class preprocessing:
     def __init__(self):
-        self.ratings = ratings('./datasets/ratings.csv')
+        self.ratings = data_ratings('./datasets/ratings.csv')
         self.credits = pd.read_csv("./datasets/credits.csv")
         self.movies = movies_metadata("./datasets/movies_metadata.csv")
         # self.preprocessing_data()
@@ -71,7 +65,7 @@ class preprocessing:
     
     # Funció per analitzar els gèneres de les pel·lícules
     def analitza_generes(self):
-        self.movies['genres'] = self.movies['genres'].fillna('[]').apply(literal_eval).apply(lambda x: [i['name'] for i in x] if isinstance(x, list) else [])
+        self.movies['genres'] = self.movies['genres'].apply(lambda x: [i['name'] for i in x] if isinstance(x, list) else [])
         tots_generes = self.movies['genres'].explode()
         generes = tots_generes.value_counts().reset_index()
         generes.columns = ['gènere', 'comptador']
@@ -181,6 +175,4 @@ if __name__=="__main__":
     p.movies_runtime_distribution()
     p.vote_vs_rate()
     p.get_most_popular_cast_crew()
-
-
 

@@ -1,6 +1,4 @@
-import sys
-sys.path.append('./systems')
-from user_to_user import UserUserRecommender
+from systems.user_to_user import UserUserRecommender
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import numpy as np
 import pandas as pd
@@ -62,7 +60,6 @@ class Evaluation:
             print("No es pot calcular la RSME si les llistes estan buides")
             return None
         return np.sqrt(mean_squared_error(np.log1p(y_true), np.log1p(y_pred)))
-    
 
     def calculate_topn_precision(self, n = 10):
         '''
@@ -96,7 +93,6 @@ class Evaluation:
             precision_values.append(precision)
 
         return np.mean(precision_values)
-    
 
     def calculate_topn_recall(self, n=10):
         '''
@@ -130,7 +126,6 @@ class Evaluation:
             recall_values.append(recall)
 
         return np.mean(recall_values)
-    
 
     def calculate_ndcg(self, n=10):
         """

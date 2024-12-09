@@ -1,6 +1,7 @@
 {
     "python.analysis.extraPaths": [
-        "./systems",
-        "./data_preprocessing"
+        // "./systems",
+        // "./data_preprocessing",
+        "ACproject-16-grup/"
     ]
 }

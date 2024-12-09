@@ -1,8 +1,3 @@
-import sys
-import os
-script_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
-sys.path.append(parent_dir)
 from data_preprocessing.preprocessing_csv import small_ratings, keywords
 
 import pandas as pd
@@ -12,15 +7,13 @@ from sklearn.metrics.pairwise import linear_kernel
 from surprise import Reader, Dataset, SVD
 import matplotlib.ticker as ticker
 
-
-
 class ContentBasedRecomender:
     def __init__(self):
         """
         Inicialitza el sistema de recomanació amb les dades de valoracions i articles.
         """
         self.ratings, self.movies = small_ratings()
-        self.credits =pd.read_csv("./datasets/credits.csv")
+        self.credits = pd.read_csv("./datasets/credits.csv")
         self.item_similarity = None
         self.cast_similarity = None
         self.keywords_similarity = None
@@ -82,12 +75,12 @@ if __name__ == '__main__':
     tfidf_array = tfidf_matrix.toarray()
     pearson_sim = np.corrcoef(tfidf_array)
     r=recomender.find_similar("Casino", 10, pearson_sim)
-    print(r)
+    print(r,'\n')
     
     #Distància cosinus
     cosine_sim = linear_kernel(tfidf_matrix)
     r=recomender.find_similar("Casino", 10, cosine_sim)
-    print(r)
+    print(r,'\n')
 
     #SVD
     r=recomender.svd(1, "Casino")
