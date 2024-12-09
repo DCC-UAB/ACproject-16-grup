@@ -4,8 +4,6 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
-from surprise import Reader, Dataset, SVD
-import matplotlib.ticker as ticker
 
 class ContentBasedRecomender:
     def __init__(self):
@@ -53,18 +51,6 @@ class ContentBasedRecomender:
         recommended_idx = [i[0] for i in sim_score][1:n+1]
         return pd.DataFrame(self.movies['title'].iloc[recommended_idx])
 
-    def svd(self, user_id, movie_title):
-        """
-        Funció per recomanar utilitzant SVD.
-        """
-        reader = Reader()
-        data = Dataset.load_from_df(self.ratings[['user', 'id', 'rating']], reader)
-        svd = SVD()
-        train = data.build_full_trainset()
-        svd.fit(train)
-        movie_id = self.movies[self.movies['title'] == movie_title]['id'].values[0]
-        return svd.predict(user_id, movie_id)
-
 
 if __name__ == '__main__':
     recomender = ContentBasedRecomender()
@@ -81,7 +67,3 @@ if __name__ == '__main__':
     cosine_sim = linear_kernel(tfidf_matrix)
     r=recomender.find_similar("Casino", 10, cosine_sim)
     print(r,'\n')
-
-    #SVD
-    r=recomender.svd(1, "Casino")
-    print(r)
