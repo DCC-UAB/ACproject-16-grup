@@ -25,8 +25,8 @@ class UserUserRecommender:
 
             # Omplim NaN amb la mitjana de cada usuari
             #self.__ratings_matrix = self.__ratings_matrix.apply(lambda col: col.fillna(col.mean()), axis=0)
-            #self.__ratings_matrix = self.__ratings_matrix.apply(lambda row: row.fillna(row.mean()), axis=1)
-            self.__ratings_matrix = self.__ratings_matrix.apply(lambda row: row.fillna(0), axis=1)
+            self.__ratings_matrix = self.__ratings_matrix.apply(lambda row: row.fillna(row.mean()), axis=1)
+            #self.__ratings_matrix = self.__ratings_matrix.apply(lambda row: row.fillna(0), axis=1)
 
             
             print(self.__ratings.head(10))  # Mostrem les primeres 10 files per depurar

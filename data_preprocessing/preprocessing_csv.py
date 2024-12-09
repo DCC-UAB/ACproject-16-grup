@@ -88,20 +88,7 @@ def small_ratings():
         movies = movies[movies[ID].isin(ratings[ID])]
         return ratings, movies
 
-def normalize_ratings(ratings):
-        """
-        Normalitza les valoracions per usuari (centrant-les a zero i escalant-les per la desviació estàndard).
-        """
-        print("Normalitzant les valoracions per usuari...")
 
-        def normalize_user(group):
-                mean = group['rating'].mean()
-                std = group['rating'].std() if group['rating'].std() != 0 else 1
-                group['rating_normalized'] = (group['rating'] - mean) / std
-                return group
-
-        ratings = ratings.groupby('userId').apply(normalize_user)
-        return ratings
 
 if __name__ == '__main__':
         # cast, crew = credits(PATH_CREDITS, PATH_MOVIES)
