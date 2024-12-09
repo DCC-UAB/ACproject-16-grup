@@ -1,7 +1,11 @@
-from surprise import SVD, Dataset, Reader, train_test_split
+from surprise import SVD
+from surprise import Dataset
+from surprise import Reader
+from surprise.model_selection import train_test_split
+import pandas as pd
 
 # Carrega les dades
-ratings = pd.read_csv("../datasets/ratings_small.csv")
+ratings = pd.read_csv("./datasets/ratings_small.csv")
 
 # Definim el format de les dades
 reader = Reader(rating_scale=(0.5, 5))  # Escala de valoracions
@@ -11,7 +15,7 @@ data = Dataset.load_from_df(ratings[['userId', 'movieId', 'rating']], reader)
 trainset, testset = train_test_split(data, test_size=0.2, random_state=42)
 
 # Inicialitzem el model SVD
-model = SVD(n_factors=50, random_state=42)  # `n_factors` defineix el nombre de factors latents
+model = SVD(n_factors=50, random_state=42)  # n_factors defineix el nombre de factors latents
 
 # Entrenem el model
 model.fit(trainset)
@@ -36,4 +40,3 @@ top_recommendations = predicted_scores[:10]
 print("Top recomanacions:")
 for movie_id, score in top_recommendations:
     print(f"Pel·lícula ID: {movie_id}, Predicció: {score:.2f}")
-
