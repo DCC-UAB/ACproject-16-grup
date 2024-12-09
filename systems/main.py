@@ -3,7 +3,7 @@ import os
 script_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
 sys.path.append(parent_dir)
-
+from user_to_user import UserUserRecommender
 from item_to_item import ItemItemRecommender
 from content_based import ContentBasedRecomender
 from data_preprocessing.preprocessing_csv import small_ratings
@@ -16,6 +16,15 @@ from surprise import Dataset, Reader, accuracy
 
 user_id = int(input("Introdueix l'ID de l'usuari: "))
 rates, movies = small_ratings()
+movie_id = int(input("Introdueix l'ID de la pel·lícula: "))
+
+# User-User
+user_user = UserUserRecommender()
+user_user.load_data('./datasets/ratings_small.csv')
+predicted_rating_cosine = user_user.predict_rating(user_id, movie_id, topN=20, method='cosine')
+print(f"Predicció de valoració (cosinus) per l'usuari {user_id} per la pel·lícula {movie_id}: {predicted_rating_cosine}")
+predicted_rating_pearson = user_user.predict_rating(user_id, movie_id, topN=20, method='pearson')
+print(f"Predicció de valoració (pearson) per l'usuari {user_id} per la pel·lícula {movie_id}: {predicted_rating_pearson}")
 
 # Item-Item
 item_item = ItemItemRecommender()

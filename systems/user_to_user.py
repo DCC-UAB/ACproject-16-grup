@@ -29,7 +29,6 @@ class UserUserRecommender:
             #self.__ratings_matrix = self.__ratings_matrix.apply(lambda row: row.fillna(0), axis=1)
 
             
-            print(self.__ratings.head(10))  # Mostrem les primeres 10 files per depurar
             self.similarity_matrix()  # Cridem la funció per generar la matriu de similitud
             
         except Exception as e:
@@ -47,7 +46,6 @@ class UserUserRecommender:
         """
         Normalitza les valoracions per usuari (centrant-les a zero i escalant-les per la desviació estàndard).
         """
-        print("Normalitzant les valoracions per usuari...")
 
         def normalize_user(group):
             mean = group['rating'].mean()
@@ -75,9 +73,7 @@ class UserUserRecommender:
             self.__user_similarity = self.__ratings_matrix.T.corr(method='pearson')
         else:
             raise ValueError("Mètode desconegut: només 'cosine' o 'pearson' són vàlids.")
-        
-        print("Matriu de similitud entre usuaris:")
-        print(self.__user_similarity)
+
 
     def predict_rating(self, user_id, movie_id, topN=20, method='cosine'):
         self.similarity_matrix(method)
