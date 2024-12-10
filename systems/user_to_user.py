@@ -123,8 +123,8 @@ if __name__ == "__main__":
     recommender.load_data('./datasets/ratings_small.csv')
 
     # Exemple per a la predicció
-    user_id = 1
-    movie_id = 30
+    user_id = 402
+    movie_id = 13
 
     predicted_rating_cosine = recommender.predict_rating(user_id, movie_id, topN=20, method='cosine')
     print(f"Predicció de valoració (cosinus) per l'usuari {user_id} per la pel·lícula {movie_id}: {predicted_rating_cosine}")
