@@ -4,7 +4,7 @@ from surprise.model_selection import train_test_split
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_curve, roc_curve, auc
-from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, mean_absolute_error
 import numpy as np
 
 class SVDRecommender:
@@ -42,6 +42,8 @@ if __name__ == '__main__':
     
     #Llista per n_factors
     n_factors_list = [10, 20, 50, 100, 150, 200]
+    
+    #ROOT MEAN ABSOLUTE ERROR
     rmse_values = []
 
     #Bucle per provar diferents n_factors
@@ -76,17 +78,20 @@ if __name__ == '__main__':
     svd=SVDRecommender(model, ratings, data)
 
     predictions = svd.train_model()
-    rmse = accuracy.rmse(predictions)
+    rmse = accuracy.rmse(predictions, verbose=False)
     print(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
+
+    #MEAN ABSOLUTE ERROR
+    #Separem els ratings que són True amb els predits pel model
+    true_ratings, predicted_ratings = svd.get_true_and_predicted()
+    mae = mean_absolute_error(true_ratings, predicted_ratings)
+    print(f"MAE: {mae:.4f}")
 
     #Mostrem recomenacions de pel·lícules amb model ja entrenat
     recomendations=svd.recommend_for_user(10, 5)
     print("Top recomanacions:")
     for movie_id, score in recomendations:
         print(f"Pel·lícula ID: {movie_id}, Predicció: {score:.2f}")
-
-    #Separem els ratings que són True amb els predits pel model
-    true_ratings, predicted_ratings = svd.get_true_and_predicted()
 
     #Diem que els ratings superiors a la meitat són positius -> "threshold"
     true_labels = (true_ratings > 3).astype(int)
