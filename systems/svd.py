@@ -3,6 +3,9 @@ from surprise import Dataset, Reader, accuracy
 from surprise.model_selection import train_test_split
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.metrics import precision_recall_curve, roc_curve, auc
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
+import numpy as np
 
 class SVDRecommender:
     def __init__(self, model, ratings, data):
@@ -24,6 +27,13 @@ class SVDRecommender:
         predicted_scores.sort(key=lambda x: x[1], reverse=True)
         return predicted_scores[:top_n]
         
+    def get_true_and_predicted(self):
+        true_ratings = []
+        predicted_ratings = []
+        for uid, iid, true_r, est, _ in self.model.test(self.test):
+            true_ratings.append(true_r)
+            predicted_ratings.append(est)
+        return np.array(true_ratings), np.array(predicted_ratings)
 
 if __name__ == '__main__':
     ratings = pd.read_csv("./datasets/ratings_small.csv")
@@ -51,7 +61,7 @@ if __name__ == '__main__':
     plt.xlabel("n_factors", fontsize = 12)
     plt.ylabel("RMSE",fontsize = 12)
     plt.grid(True)
-    plt.show
+    plt.show()
 
     #Més Baix: n_factor = 10
     #Baix, però agafa relacions més complexes: n_factor = 50
@@ -69,8 +79,51 @@ if __name__ == '__main__':
     rmse = accuracy.rmse(predictions)
     print(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
 
-
+    #Mostrem recomenacions de pel·lícules amb model ja entrenat
     recomendations=svd.recommend_for_user(10, 5)
     print("Top recomanacions:")
     for movie_id, score in recomendations:
         print(f"Pel·lícula ID: {movie_id}, Predicció: {score:.2f}")
+
+    #Separem els ratings que són True amb els predits pel model
+    true_ratings, predicted_ratings = svd.get_true_and_predicted()
+
+    #Diem que els ratings superiors a la meitat són positius -> "threshold"
+    true_labels = (true_ratings > 3).astype(int)
+    predicted_scores = (predicted_ratings > 3).astype(int)
+
+    #Calculem les diferents mètriques
+    precision = precision_score(true_labels, predicted_scores)
+    recall = recall_score(true_labels, predicted_scores)
+    f1 = f1_score(true_labels, predicted_scores)
+    accuracy = accuracy_score(true_labels, predicted_scores)
+
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"F1 Score: {f1:.4f}")
+    print(f"Accuracy: {accuracy:.4f}")
+
+    #Fem la precision-recall curve i la ROC curve
+    precision_values, recall_values, _ = precision_recall_curve(true_labels, predicted_ratings)
+
+    false_positive_rate, true_positive_rate, _ = roc_curve(true_labels, predicted_ratings)
+    roc_area = auc(false_positive_rate, true_positive_rate)
+
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 2, 1)
+    plt.plot(recall_values, precision_values, color='blue', label='Precision-Recall curve')
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title('Precision-Recall Curve')
+    plt.grid(True)
+
+    plt.subplot(1, 2, 2)
+    plt.plot(false_positive_rate, true_positive_rate, color='blue', label=f'ROC curve (AUC = {roc_area:.2f})')
+    plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC Curve')
+    plt.grid(True)
+
+    plt.tight_layout()
+    plt.show()
