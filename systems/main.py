@@ -44,21 +44,8 @@ if actual_rating.size > 0:
     mse_pearson = mean_squared_error([actual_rating], [predicted_rating_pearson])
     print(f"Mean Squared Error (pearson): {mse_pearson:.4f}")
     
-    # Assuming binary relevance for precision and recall calculation
-    threshold = 3.5  # Threshold to consider a rating as relevant
-    actual_relevant = actual_rating >= threshold
-    predicted_relevant_cosine = predicted_rating_cosine >= threshold
-    predicted_relevant_pearson = predicted_rating_pearson >= threshold
-
-    precision_cosine = precision_score([actual_relevant], [predicted_relevant_cosine])
-    recall_cosine = recall_score([actual_relevant], [predicted_relevant_cosine])
-    print(f"Precision (cosinus): {precision_cosine:.4f}")
-    print(f"Recall (cosinus): {recall_cosine:.4f}")
-
-    precision_pearson = precision_score([actual_relevant], [predicted_relevant_pearson])
-    recall_pearson = recall_score([actual_relevant], [predicted_relevant_pearson])
-    print(f"Precision (pearson): {precision_pearson:.4f}")
-    print(f"Recall (pearson): {recall_pearson:.4f}")
+    print(f"Root Mean Squared Error (cosinus): {np.sqrt(mse_cosine):.4f}")
+    print(f"Root Mean Squared Error (pearson): {np.sqrt(mse_pearson):.4f}")
 else:
     print(f"No hi ha valoració real per l'usuari {user_id} per la pel·lícula {movie_id}")
 
