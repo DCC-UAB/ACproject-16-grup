@@ -14,6 +14,7 @@ from surprise import SVD
 from surprise import Dataset, Reader, accuracy
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import precision_score, recall_score
+import pandas as pd
 
 
 user_id = int(input("Introdueix l'ID de l'usuari: "))
@@ -21,6 +22,8 @@ rates, movies = small_ratings()
 movie_id = int(input("Introdueix l'ID de la pel·lícula: "))
 
 # User-User
+print("\nUser-User")
+
 user_user = UserUserRecommender()
 user_user.load_data('./datasets/ratings_small.csv')
 predicted_rating_cosine = user_user.predict_rating(user_id, movie_id, topN=20, method='cosine')
@@ -61,13 +64,16 @@ else:
 
 
 # Item-Item
+print("\nItem-Item")
 item_item = ItemItemRecommender()
-rec=item_item.recommend_for_user(user_id, similarity='cosine',top_n=5)
+item_item.load_data('./datasets/ratings_small.csv')
+rec = item_item.recommend_for_user(user_id, top_n=5, method='cosine')
 print('Recomanacions cosinus:\n',rec)
 
 #Content-Based
+print("\nContent-Based")
 movie = input("Introdueix el títol de la pel·lícula: ")
-content_based = ContentBasedRecomender()
+content_based = ContentBasedRecommender()
 content_based.merge_data()
 tfidf_matrix = content_based.tfidf()
 
@@ -82,12 +88,17 @@ r=content_based.find_similar(movie, 10, cosine_sim)
 print(r,'\n')
 
 #SVD
-svd = SVDRecommender()
+print("\nSVD")
+model = SVD(n_factors=50, random_state=42) 
 reader = Reader(rating_scale=(0.5, 5)) 
 data = Dataset.load_from_df(rates[['userId', 'movieId', 'rating']], reader)
+svd = SVDRecommender(model, rates, data)
 
-#Train model
 model = SVD(n_factors=50, random_state=42) 
+
+predictions = svd.train_model()
+rmse = accuracy.rmse(predictions, verbose=False)
+#Train model
 predictions = svd.train_model()
 mse = accuracy.mse(predictions)
 print(f"Root Mean Squared Error (MSE): {mse:.4f}")
