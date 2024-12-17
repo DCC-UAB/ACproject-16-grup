@@ -44,21 +44,8 @@ if actual_rating.size > 0:
     mse_pearson = mean_squared_error([actual_rating], [predicted_rating_pearson])
     print(f"Mean Squared Error (pearson): {mse_pearson:.4f}")
     
-    # Assuming binary relevance for precision and recall calculation
-    threshold = 3.5  # Threshold to consider a rating as relevant
-    actual_relevant = actual_rating >= threshold
-    predicted_relevant_cosine = predicted_rating_cosine >= threshold
-    predicted_relevant_pearson = predicted_rating_pearson >= threshold
-
-    precision_cosine = precision_score([actual_relevant], [predicted_relevant_cosine])
-    recall_cosine = recall_score([actual_relevant], [predicted_relevant_cosine])
-    print(f"Precision (cosinus): {precision_cosine:.4f}")
-    print(f"Recall (cosinus): {recall_cosine:.4f}")
-
-    precision_pearson = precision_score([actual_relevant], [predicted_relevant_pearson])
-    recall_pearson = recall_score([actual_relevant], [predicted_relevant_pearson])
-    print(f"Precision (pearson): {precision_pearson:.4f}")
-    print(f"Recall (pearson): {recall_pearson:.4f}")
+    print(f"Root Mean Squared Error (cosinus): {np.sqrt(mse_cosine):.4f}")
+    print(f"Root Mean Squared Error (pearson): {np.sqrt(mse_pearson):.4f}")
 else:
     print(f"No hi ha valoració real per l'usuari {user_id} per la pel·lícula {movie_id}")
 
@@ -78,33 +65,25 @@ content_based.merge_data()
 tfidf_matrix = content_based.tfidf()
 
 #Coficient de Pearson
+print('Recomanacions Pearson:\n')
 pearson_sim = np.corrcoef(tfidf_matrix.toarray())
 r=content_based.find_similar(movie, 10, pearson_sim)
-print('Recomanacions Pearson:\n',r)
 
 #Distància cosinus
+print('Recomanacions Cosinus:\n')
 cosine_sim = linear_kernel(tfidf_matrix)
 r=content_based.find_similar(movie, 10, cosine_sim)
 print(r,'\n')
 
 #SVD
 print("\nSVD")
+rates = pd.read_csv("./datasets/ratings_small.csv")
 model = SVD(n_factors=50, random_state=42) 
 reader = Reader(rating_scale=(0.5, 5)) 
 data = Dataset.load_from_df(rates[['userId', 'movieId', 'rating']], reader)
 svd = SVDRecommender(model, rates, data)
-
-model = SVD(n_factors=50, random_state=42) 
-
 predictions = svd.train_model()
-rmse = accuracy.rmse(predictions, verbose=False)
-#Train model
-predictions = svd.train_model()
-mse = accuracy.mse(predictions)
-print(f"Root Mean Squared Error (MSE): {mse:.4f}")
-
-#Recommendations
 recomendations=svd.recommend_for_user(10, 5)
-print("Top recomanacions:")
+print("\nTop recomanacions:")
 for movie_id, score in recomendations:
     print(f"Pel·lícula ID: {movie_id}, Predicció: {score:.2f}")
