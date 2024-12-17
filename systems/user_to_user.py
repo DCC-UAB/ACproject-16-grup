@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+import time
 
 class UserUserRecommender:
     def __init__(self):
@@ -147,9 +148,32 @@ class UserUserRecommender:
 
         return train_data, validation_data, test_data
 
+    def recommend_movies_for_user(self, user_id, topN=10, method='cosine'):
+        """
+        Recomana les millors pel·lícules per a un usuari que encara no hagi vist.
+        """
+        self.similarity_matrix(method)
+        
+        if user_id not in self.__ratings_matrix.index:
+            print(f"L'usuari {user_id} no té dades al sistema.")
+            return []
+        
+        user_ratings = self.__ratings_matrix.loc[user_id]
+        unseen_movies = user_ratings[user_ratings.isna()].index  # Pel·lícules no valorades per l'usuari
+        
+        # Predir les valoracions per a totes les pel·lícules no vistes
+        predictions = {
+            movie_id: self.predict_rating(user_id, movie_id, topN=topN, method=method)
+            for movie_id in unseen_movies
+        }
+        
+        # Ordenar les pel·lícules per la valoració predita, de més alta a més baixa
+        recommended_movies = sorted(predictions.items(), key=lambda x: x[1], reverse=True)[:topN]
+        return recommended_movies
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     recommender = UserUserRecommender()
     recommender.load_data('./datasets/ratings_small.csv')
 
@@ -174,6 +198,9 @@ if __name__ == "__main__":
     mae_validation = (validation_data['rating'] - validation_data['predicted_rating']).abs().mean()
     print(f"Error MAE en validació: {mae_validation}")
 
+    rmse_validation = np.sqrt(((validation_data['rating'] - validation_data['predicted_rating']) ** 2).mean())
+    print(f"Error RMSE en validació: {rmse_validation}")
+
     # Predir les valoracions del conjunt de test
     test_data['predicted_rating'] = test_data.apply(
         lambda row: recommender.predict_rating(row['userId'], row['movieId'], topN=20, method='cosine'), axis=1
@@ -183,7 +210,29 @@ if __name__ == "__main__":
     mae_test = (test_data['rating'] - test_data['predicted_rating']).abs().mean()
     print(f"Error MAE en test: {mae_test}")
 
+    rmse_test = np.sqrt(((test_data['rating'] - test_data['predicted_rating']) ** 2).mean())
+    print(f"Error RMSE en test: {rmse_test}")
 
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Temps total: {elapsed_time:.2f} segons")
+
+    while True:
+        try:
+            user_id = int(input("Introdueix l'ID de l'usuari per qui vols recomanacions (o -1 per sortir): "))
+            if user_id == -1:
+                break
+
+            recommended_movies = recommender.recommend_movies_for_user(user_id, topN=10, method='cosine')
+
+            if not recommended_movies:
+                print(f"No s'han trobat pel·lícules per recomanar a l'usuari {user_id}.")
+            else:
+                print(f"Les 10 millors pel·lícules recomanades per l'usuari {user_id} són:")
+                for i, (movie_id, predicted_rating) in enumerate(recommended_movies, start=1):
+                    print(f"{i}. Pel·lícula ID {movie_id} - Valoració predita: {predicted_rating:.2f}")
+        except ValueError:
+            print("Si us plau, introdueix un ID vàlid.")    
 
 
 
