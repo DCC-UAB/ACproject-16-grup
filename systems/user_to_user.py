@@ -75,7 +75,7 @@ class UserUserRecommender:
             raise ValueError("Mètode desconegut: només 'cosine' o 'pearson' són vàlids.")
 
 
-    def predict_rating(self, user_id, movie_id, topN=20, method='cosine'):
+    def predict_rating(self, user_id, movie_id, topN=3, method='cosine'):
         self.similarity_matrix(method)
         
         if movie_id not in self.__ratings_matrix.columns or user_id not in self.__ratings_matrix.index:
@@ -116,12 +116,81 @@ class UserUserRecommender:
         
         return recommendations
 
+    def split_data(self, min_user_ratings=5, min_movie_ratings=5, train_size=0.7, validation_size=0.15, random_state=42):
+        """
+        Divideix el dataset en tres subconjunts: entrenament, validació i test.
+        """
+        # Assegura't que 'userId' i 'movieId' són columnes normals
+        self.__ratings = self.__ratings.reset_index(drop=True)
+
+        # Filtra usuaris i pel·lícules amb suficients valoracions
+        user_counts = self.__ratings.groupby('userId').size()
+        valid_users = user_counts[user_counts >= min_user_ratings].index
+
+        movie_counts = self.__ratings.groupby('movieId').size()
+        valid_movies = movie_counts[movie_counts >= min_movie_ratings].index
+
+        filtered_ratings = self.__ratings[
+            (self.__ratings['userId'].isin(valid_users)) &
+            (self.__ratings['movieId'].isin(valid_movies))
+        ]
+
+        # Barreja les dades i divideix-les
+        shuffled_ratings = filtered_ratings.sample(frac=1, random_state=random_state)
+
+        train_end = int(train_size * len(shuffled_ratings))
+        validation_end = train_end + int(validation_size * len(shuffled_ratings))
+
+        train_data = shuffled_ratings.iloc[:train_end]
+        validation_data = shuffled_ratings.iloc[train_end:validation_end]
+        test_data = shuffled_ratings.iloc[validation_end:]
+
+        return train_data, validation_data, test_data
+
 
 
 if __name__ == "__main__":
     recommender = UserUserRecommender()
     recommender.load_data('./datasets/ratings_small.csv')
 
+     # Divideix les dades en train, validation, i test
+    train_data, validation_data, test_data = recommender.split_data(
+        min_user_ratings=5, min_movie_ratings=5, train_size=0.7, validation_size=0.15
+    )
+    
+    print(f"Conjunt d'entrenament: {len(train_data)} valoracions")
+    print(f"Conjunt de validació: {len(validation_data)} valoracions")
+    print(f"Conjunt de test: {len(test_data)} valoracions")
+
+    # Carregar només les dades d'entrenament al model
+    recommender._UserUserRecommender__ratings = train_data
+
+    # Predir les valoracions del conjunt de validació
+    validation_data['predicted_rating'] = validation_data.apply(
+        lambda row: recommender.predict_rating(row['userId'], row['movieId'], topN=20, method='cosine'), axis=1
+    )
+    
+    # Càlcul de l'error en validació
+    mae_validation = (validation_data['rating'] - validation_data['predicted_rating']).abs().mean()
+    print(f"Error MAE en validació: {mae_validation}")
+
+    # Predir les valoracions del conjunt de test
+    test_data['predicted_rating'] = test_data.apply(
+        lambda row: recommender.predict_rating(row['userId'], row['movieId'], topN=20, method='cosine'), axis=1
+    )
+    
+    # Càlcul de l'error en test
+    mae_test = (test_data['rating'] - test_data['predicted_rating']).abs().mean()
+    print(f"Error MAE en test: {mae_test}")
+
+
+
+
+
+
+
+
+    '''
     # Exemple per a la predicció
     user_id = 402
     movie_id = 13
@@ -135,3 +204,4 @@ if __name__ == "__main__":
     # Generar la matriu de recomanacions
     recommendation_matrix = recommender.generate_recommendation_matrix(topN=10, method='cosine')
     print("\nMatriu de recomanacions:\n", recommendation_matrix)
+    '''
