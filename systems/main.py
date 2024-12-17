@@ -25,10 +25,12 @@ movie_id = int(input("Introdueix l'ID de la pel·lícula: "))
 print("\nUser-User")
 
 user_user = UserUserRecommender()
-user_user.load_data('./datasets/ratings_small.csv')
-predicted_rating_cosine = user_user.predict_rating(user_id, movie_id, topN=20, method='cosine')
+user_user.load_data(rates, movies)
+user_user.calculate_similarity_matrix(method='cosine')
+predicted_rating_cosine = user_user.predict_rating(user_id, movie_id, topN=5, similarity_threshold=0.1)
 print(f"Predicció de valoració (cosinus) per l'usuari {user_id} per la pel·lícula {movie_id}: {predicted_rating_cosine}")
-predicted_rating_pearson = user_user.predict_rating(user_id, movie_id, topN=20, method='pearson')
+user_user.calculate_similarity_matrix(method='pearson')
+predicted_rating_pearson = user_user.predict_rating(user_id, movie_id, topN=5, similarity_threshold=0.1)
 print(f"Predicció de valoració (pearson) per l'usuari {user_id} per la pel·lícula {movie_id}: {predicted_rating_pearson}")
 
 actual_rating = rates[(rates['user'] == user_id) & (rates['id'] == movie_id)]['rating'].values
