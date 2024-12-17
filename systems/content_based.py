@@ -27,8 +27,11 @@ class ContentBasedRecommender:
     def compute_similarity(self, method='cosine'):
         self.similarity_method = method
         tfidf = TfidfVectorizer(stop_words='english')
-        self.movies['overview'] = self.movies['overview'].fillna('')
-        tfidf_matrix = tfidf.fit_transform(self.movies["overview"])
+        no_key = self.movies[self.movies['keywords'] == '']
+        self.movies = self.movies[self.movies['keywords'].notna()]
+        self.movies['keywords'] = self.movies['keywords'].apply(lambda x: ' '.join(x))
+        self.movies = self.movies[self.movies['keywords'] != '']
+        tfidf_matrix=tfidf.fit_transform(self.movies["keywords"])
 
         if method == 'cosine':
             self.similarity_matrix = linear_kernel(tfidf_matrix)
@@ -55,7 +58,7 @@ class ContentBasedRecommender:
                 if movie_id in not_watched_ids:
                     recommendations[movie_id] = max(recommendations.get(movie_id, 0), score)
 
-        sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)[:n]
+        sorted_recommendations = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)[1:n+1]
         return pd.DataFrame(
             [(self.movies.loc[self.movies['id'] == movie_id, 'title'].values[0], similarity) 
              for movie_id, similarity in sorted_recommendations],
