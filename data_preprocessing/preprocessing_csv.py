@@ -1,6 +1,8 @@
 import pandas as pd
 import ast
-import time
+from sklearn.feature_extraction.text import TfidfVectorizer
+import numpy as np
+
 
 PATH_MOVIES = "./datasets/movies_metadata.csv"
 PATH_RATINGS = "./datasets/ratings.csv"
@@ -58,7 +60,6 @@ def data_ratings(path=PATH_RATINGS):
     return ratings
 
 
-# Funció per convertir la cadena JSON en una llista de diccionaris
 def convert_to_dict_list(string):
     return ast.literal_eval(string)
 
@@ -92,11 +93,29 @@ def credits(path, path_movies=PATH_MOVIES):
     return cast.convert_dtypes(), crew.convert_dtypes()
 
 
-def keywords(path=PATH_KEYWORDS):
+def keywords(movies, path=PATH_KEYWORDS):
     keywords = pd.read_csv(path)
     keywords["keywords"] = keywords["keywords"].apply(convert_to_dict_list)
-    keywords["keywords_id"] = keywords["keywords"].apply(lambda x: [d["id"] for d in x])
-    keywords["keywords"] = keywords["keywords"].apply(lambda x: [d["name"] for d in x])
+    keywords["keywords_id"] = keywords["keywords"].apply(lambda x: [d["id"] for d in x if isinstance(d, dict) and "id" in d])
+    keywords["keywords"] = keywords["keywords"].apply(lambda x: [d["name"] for d in x if isinstance(d, dict) and "name" in d])
+
+    movies_metadata = movies[["id", "overview"]].dropna(subset=["overview"])
+    keywords = keywords[keywords["id"].isin(movies_metadata["id"])]
+    df = pd.merge(keywords, movies_metadata, on="id", how="left")
+    no_key = df[df['keywords'].apply(len) == 0].copy()
+    if not no_key.empty:
+        for idx, row in no_key.iterrows():
+            overview = row['overview'] if pd.notnull(row['overview']) and row['overview'].strip() else ''
+            if overview:
+                tfidf = TfidfVectorizer(ngram_range=(1, 2), stop_words='english')
+                tfidf_matrix = tfidf.fit_transform([overview])
+                tfidf_feature_names = np.array(tfidf.get_feature_names_out())
+                tfidf_scores = tfidf_matrix.toarray().flatten()
+                top_indices = tfidf_scores.argsort()[-5:][::-1]
+                keywords_for_movie = tfidf_feature_names[top_indices].tolist()
+            else:
+                keywords_for_movie = []
+            keywords.at[keywords[keywords["id"] == row['id']].index[0], "keywords"] = keywords_for_movie
     return keywords
 
 
@@ -108,17 +127,20 @@ def small_ratings():
     ratings = data_ratings(PATH_RATINGS_SMALL)
     movies = movies_metadata(PATH_MOVIES)
     movies = movies[movies[ID].isin(ratings[ID])]
-    return ratings, movies
+    key = keywords(movies, PATH_KEYWORDS)
+    return ratings, movies, key
 
 
 if __name__ == "__main__":
     # cast, crew = credits(PATH_CREDITS, PATH_MOVIES)
-    # keywords = keywords(PATH_KEYWORDS)
+    rates, movies, key= small_ratings()
+    key = keywords(movies, PATH_KEYWORDS)
+    print(key["keywords"].tail(10))
     # links = links(PATH_LINKS)
     # links_small = links(PATH_LINKS_SMALL)
     # movies = movies_metadata(PATH_MOVIES)
     # ratings = data_ratings(PATH_RATINGS)
-    ratings_small = small_ratings()
+    
 
     # print('CREDITS\n')
     # print(cast.info())

@@ -18,7 +18,7 @@ import pandas as pd
 
 
 user_id = int(input("Introdueix l'ID de l'usuari: "))
-rates, movies = small_ratings()
+rates, movies, keywords = small_ratings()
 movie_id = int(input("Introdueix l'ID de la pel·lícula: "))
 
 # User-User
@@ -64,13 +64,13 @@ recommender.merge_data()
 #Pearson
 similarity_method = 'pearson'
 recommender.compute_similarity(method=similarity_method)
-recommendations = recommender.find_similar_for_user(user_id, 10)
+recommendations = recommender.find_similar_for_user(user_id, 10, 3)
 print(f"Recomenacions per l'usuari {user_id} amb similaritat {similarity_method}:")
 print(recommendations)
 
 similarity_method = 'cosine'
 recommender.compute_similarity(method=similarity_method)
-recommendations = recommender.find_similar_for_user(user_id, 10)
+recommendations = recommender.find_similar_for_user(user_id, 10, 3)
 print(f"Recomenacions per l'usuari {user_id} amb similaritat {similarity_method}:")
 print(recommendations)
 
