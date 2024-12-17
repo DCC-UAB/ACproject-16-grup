@@ -18,7 +18,7 @@ import pandas as pd
 
 
 user_id = int(input("Introdueix l'ID de l'usuari: "))
-rates, movies, keywords = small_ratings()
+rates, movies, keywords, credits = small_ratings()
 movie_id = int(input("Introdueix l'ID de la pel·lícula: "))
 
 # User-User
@@ -75,7 +75,7 @@ print(f"Recomenacions per l'usuari {user_id} amb similaritat {similarity_method}
 print(recommendations)
 
 #SVD
-print("SVD")
+print("\nSVD")
 rates = pd.read_csv("./datasets/ratings_small.csv")
 model = SVD(n_factors=50, random_state=42) 
 reader = Reader(rating_scale=(0.5, 5)) 

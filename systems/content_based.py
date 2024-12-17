@@ -15,29 +15,44 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 class ContentBasedRecommender:
     def __init__(self):
-        self.ratings, self.movies, self.keywords = small_ratings()
-        self.credits = pd.read_csv("./datasets/credits.csv")
+        self.ratings, self.movies, self.keywords, self.credits = small_ratings()
         self.similarity_matrix = None
         self.similarity_method = None
 
     def merge_data(self):
         self.movies = pd.merge(self.movies, self.keywords, on='id', how='left')
+        self.credits = self.credits[
+            (self.credits['actors'].notnull() & (self.credits['actors'] != '')) |
+            (self.credits['director'].notnull() & (self.credits['director'] != ''))
+        ]
+
         self.movies = pd.merge(self.movies, self.credits, on='id', how='left')
-        self.movies['keywords'] = self.movies['keywords'].fillna('')
+
+        self.movies['keywords'] = self.movies['keywords'].fillna('').apply(lambda x: ' '.join(x) if isinstance(x, list) else x)
+        self.movies['actors'] = self.movies['actors'].fillna('')
+        self.movies['director'] = self.movies['director'].fillna('')
+
+        self.movies['combined_features'] = self.movies.apply(
+            lambda row: ' '.join(
+                filter(None, [
+                    ' '.join(row['keywords']) if isinstance(row['keywords'], list) else row['keywords'],
+                    row['actors'],
+                    row['director']
+                ])
+            ), axis=1
+        )
+
         return self.movies
-    
+
+
+
     def compute_similarity(self, method='cosine'):
         self.similarity_method = method
         tfidf = TfidfVectorizer(stop_words='english')
 
-        self.movies['keywords'] = self.movies['keywords'].apply(
-            lambda x: ' '.join(x) if isinstance(x, list) else x
-        )
-        self.movies['keywords'] = self.movies['keywords'].apply(lambda x: ' '.join(x.split()))
-        self.movies = self.movies[self.movies['keywords'] != '']
-
-        tfidf_matrix = tfidf.fit_transform(self.movies["keywords"])
-
+        self.movies['combined_features'] = self.movies['combined_features'].apply(lambda x: ' '.join(x.split()))
+        self.movies = self.movies[self.movies['combined_features'] != '']
+        tfidf_matrix = tfidf.fit_transform(self.movies["combined_features"])
         if method == 'cosine':
             self.similarity_matrix = linear_kernel(tfidf_matrix)
         elif method == 'pearson':
@@ -45,6 +60,7 @@ class ContentBasedRecommender:
             self.similarity_matrix = np.corrcoef(tfidf_array)
         else:
             raise ValueError("Invalid similarity method. Choose 'cosine' or 'pearson'.")
+
 
 
 

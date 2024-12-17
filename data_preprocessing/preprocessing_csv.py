@@ -2,6 +2,7 @@ import pandas as pd
 import ast
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
+import json
 
 
 PATH_MOVIES = "./datasets/movies_metadata.csv"
@@ -64,33 +65,34 @@ def convert_to_dict_list(string):
     return ast.literal_eval(string)
 
 
-def credits(path, path_movies=PATH_MOVIES):
-    movies = movies_metadata(path_movies)
+
+def credits(movies, path=PATH_CREDITS):
     credits = pd.read_csv(path)
+    id_movies = set(movies['id']) 
+    credits = credits[credits['id'].isin(id_movies)]
 
-    id_movies = set(movies[ID])
+    def extract_actors(cast_column):
+        try:
+            cast_list = json.loads(cast_column.replace("'", "\""))
+            return ', '.join([actor['name'] for actor in cast_list])
+        except (ValueError, TypeError):
+            return ''
+    
+    def extract_director(crew_column):
+        try:
+            crew_list = json.loads(crew_column.replace("'", "\""))
+            for member in crew_list:
+                if member['job'] == 'Director':
+                    return member['name']
+            return ''
+        except (ValueError, TypeError):
+            return ''
 
-    credits = credits[credits[ID].isin(id_movies)]
-
-    credits["cast"] = credits["cast"].apply(convert_to_dict_list)
-    credits["crew"] = credits["crew"].apply(convert_to_dict_list)
-
-    cast_rows = []
-    crew_rows = []
-
-    for _, row in credits.iterrows():
-        for cast_member in row.cast:
-            cast_member["movie_id"] = row[ID]
-            cast_rows.append(cast_member)
-
-        for crew_member in row.crew:
-            crew_member["movie_id"] = row[ID]
-            crew_rows.append(crew_member)
-
-    cast = pd.DataFrame(cast_rows)
-    crew = pd.DataFrame(crew_rows)
-
-    return cast.convert_dtypes(), crew.convert_dtypes()
+    credits['actors'] = credits['cast'].apply(lambda x: extract_actors(x))
+    credits['director'] = credits['crew'].apply(lambda x: extract_director(x))
+    credits_cleaned = credits[['id', 'actors', 'director']]
+    credits_cleaned = credits_cleaned[(credits_cleaned['actors'] != '') | (credits_cleaned['director'] != '')]
+    return credits_cleaned
 
 
 def keywords(movies, path=PATH_KEYWORDS):
@@ -128,14 +130,15 @@ def small_ratings():
     movies = movies_metadata(PATH_MOVIES)
     movies = movies[movies[ID].isin(ratings[ID])]
     key = keywords(movies, PATH_KEYWORDS)
-    return ratings, movies, key
+    castcrew = credits(movies, PATH_CREDITS)
+    return ratings, movies, key, castcrew
 
 
 if __name__ == "__main__":
-    # cast, crew = credits(PATH_CREDITS, PATH_MOVIES)
     rates, movies, key= small_ratings()
+    credit= credits(movies, PATH_CREDITS)
+    print(credit)
     key = keywords(movies, PATH_KEYWORDS)
-    print(key["keywords"].tail(10))
     # links = links(PATH_LINKS)
     # links_small = links(PATH_LINKS_SMALL)
     # movies = movies_metadata(PATH_MOVIES)
