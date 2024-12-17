@@ -65,33 +65,25 @@ content_based.merge_data()
 tfidf_matrix = content_based.tfidf()
 
 #Coficient de Pearson
+print('Recomanacions Pearson:\n')
 pearson_sim = np.corrcoef(tfidf_matrix.toarray())
 r=content_based.find_similar(movie, 10, pearson_sim)
-print('Recomanacions Pearson:\n',r)
 
 #Distància cosinus
+print('Recomanacions Cosinus:\n')
 cosine_sim = linear_kernel(tfidf_matrix)
 r=content_based.find_similar(movie, 10, cosine_sim)
 print(r,'\n')
 
 #SVD
 print("\nSVD")
+rates = pd.read_csv("./datasets/ratings_small.csv")
 model = SVD(n_factors=50, random_state=42) 
 reader = Reader(rating_scale=(0.5, 5)) 
 data = Dataset.load_from_df(rates[['userId', 'movieId', 'rating']], reader)
 svd = SVDRecommender(model, rates, data)
-
-model = SVD(n_factors=50, random_state=42) 
-
 predictions = svd.train_model()
-rmse = accuracy.rmse(predictions, verbose=False)
-#Train model
-predictions = svd.train_model()
-mse = accuracy.mse(predictions)
-print(f"Root Mean Squared Error (MSE): {mse:.4f}")
-
-#Recommendations
 recomendations=svd.recommend_for_user(10, 5)
-print("Top recomanacions:")
+print("\nTop recomanacions:")
 for movie_id, score in recomendations:
     print(f"Pel·lícula ID: {movie_id}, Predicció: {score:.2f}")
