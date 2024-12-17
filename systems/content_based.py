@@ -5,12 +5,11 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 
-# Ajusta el sistema de directorios para importar correctamente
 script_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
 sys.path.append(parent_dir)
 
-from data_preprocessing.preprocessing_csv import small_ratings, keywords
+from data_preprocessing.preprocessing_csv import small_ratings
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 class ContentBasedRecommender:

@@ -134,11 +134,29 @@ def small_ratings():
     return ratings, movies, key, castcrew
 
 
+def ground_truth(ratings):
+    user_counts = ratings['user'].value_counts()
+    valid_users = user_counts[user_counts > 3].index
+
+    filtered_ratings = ratings[ratings['user'].isin(valid_users)]
+
+    sample_size = int(len(ratings) * 0.15)
+    ground_truth_sample = filtered_ratings.sample(n=sample_size, random_state=42)
+
+    ratings = ratings.drop(ground_truth_sample.index)
+
+    ground_truth_df = ground_truth_sample[['user', 'id', 'rating']]
+    return ground_truth_df, ratings
+
+
+
+
+
 if __name__ == "__main__":
-    rates, movies, key= small_ratings()
-    credit= credits(movies, PATH_CREDITS)
-    print(credit)
+    rates, movies, key, credit= small_ratings()
     key = keywords(movies, PATH_KEYWORDS)
+    #ground, ratingst = ground_truth(rates)
+ 
     # links = links(PATH_LINKS)
     # links_small = links(PATH_LINKS_SMALL)
     # movies = movies_metadata(PATH_MOVIES)
