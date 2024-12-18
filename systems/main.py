@@ -45,7 +45,7 @@ if actual_rating.size > 0:
 
     mse_pearson = mean_squared_error([actual_rating], [predicted_rating_pearson])
     print(f"Mean Squared Error (pearson): {mse_pearson:.4f}")
-    
+
     print(f"Root Mean Squared Error (cosinus): {np.sqrt(mse_cosine):.4f}")
     print(f"Root Mean Squared Error (pearson): {np.sqrt(mse_pearson):.4f}")
 else:
@@ -59,24 +59,24 @@ item_item.load_data('./datasets/ratings_small.csv')
 rec = item_item.recommend_for_user(user_id, top_n=5, method='cosine')
 print('Recomanacions cosinus:\n',rec)
 
-#Content-Based
+# Content-Based
 print("\nContent-Based")
 recommender = ContentBasedRecommender()
 recommender.merge_data()
-#Pearson
+# Pearson
 similarity_method = 'pearson'
 recommender.compute_similarity(method=similarity_method)
 recommendations = recommender.find_similar_for_user(user_id, 10, 3)
 print(f"Recomenacions per l'usuari {user_id} amb similaritat {similarity_method}:")
 print(recommendations)
-#Cosine
+# Cosine
 similarity_method = 'cosine'
 recommender.compute_similarity(method=similarity_method)
 recommendations = recommender.find_similar_for_user(user_id, 10, 3)
 print(f"Recomenacions per l'usuari {user_id} amb similaritat {similarity_method}:")
 print(recommendations)
 
-#SVD
+# SVD
 print("\nSVD")
 rates = pd.read_csv("./datasets/ratings_small.csv")
 model = SVD(n_factors=50, random_state=42) 
