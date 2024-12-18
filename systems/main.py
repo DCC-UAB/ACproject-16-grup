@@ -69,7 +69,7 @@ recommender.compute_similarity(method=similarity_method)
 recommendations = recommender.find_similar_for_user(user_id, 10, 3)
 print(f"Recomenacions per l'usuari {user_id} amb similaritat {similarity_method}:")
 print(recommendations)
-
+#Cosine
 similarity_method = 'cosine'
 recommender.compute_similarity(method=similarity_method)
 recommendations = recommender.find_similar_for_user(user_id, 10, 3)

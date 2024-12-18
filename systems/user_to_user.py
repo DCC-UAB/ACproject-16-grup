@@ -81,7 +81,9 @@ class UserUserRecommender:
         for movie_id in not_watched:
             predictions[movie_id] = self.predict_rating(user_id, movie_id, topN=topN)
 
-        recommended = pd.Series(predictions).sort_values(ascending=False)[:topN]
+        recommended = pd.Series(predictions).sort_values(ascending=False)
+        print(recommended)
+        recommended=recommended[:topN]
         recommended_movies = recommended.reset_index()
         recommended_movies.columns = ['id', 'predicted_rating']
         recommended_movies = pd.merge(recommended_movies, self.movies[['id', 'title']], on='id', how='left')
@@ -115,7 +117,7 @@ if __name__ == "__main__":
     print(f"Test - MAE: {mae_test:.4f}, RMSE: {rmse_test:.4f}")
 
     # Recomanacions per a un usuari
-    user_id = 100
+    user_id = 123
     recommendations = recommender.recomana(user_id, topN=5)
     print(f"Recomanacions per a l'usuari {user_id}:\n{recommendations}")
 
