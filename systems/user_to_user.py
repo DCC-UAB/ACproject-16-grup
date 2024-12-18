@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import time
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
 import sys
 import os
 
@@ -82,7 +85,6 @@ class UserUserRecommender:
             predictions[movie_id] = self.predict_rating(user_id, movie_id, topN=topN)
 
         recommended = pd.Series(predictions).sort_values(ascending=False)
-        print(recommended)
         recommended=recommended[:topN]
         recommended_movies = recommended.reset_index()
         recommended_movies.columns = ['id', 'predicted_rating']
@@ -90,10 +92,23 @@ class UserUserRecommender:
 
         return recommended_movies[['title', 'predicted_rating']]
 
+    def plot_errors(self, mae_val_cos, mae_val_per, rmse_val_cos, rmse_val_per):
+        data = pd.DataFrame({
+            'Mètode': ['Cosinus', 'Pearson', 'Cosinus', 'Pearson'],
+            'Mètrica': ['MAE', 'MAE', 'RMSE', 'RMSE'],
+            'Valor': [mae_val_cos, mae_val_per, rmse_val_cos, rmse_val_per]
+        })
+
+        plt.figure(figsize=(8, 6))
+        sns.barplot(data=data, x='Mètrica', y='Valor', hue='Mètode', palette='pastel')
+        plt.title('Comparativa d\'errors segons la similitud (conjunt de validació)')
+        plt.ylabel('Valor')
+        plt.xlabel('Mètrica')
+        plt.legend(title='Mètode')
+        plt.show()
 
 
 if __name__ == "__main__":
-    start_time = time.time()
     recommender = UserUserRecommender()
 
     # Carregar les dades
@@ -117,10 +132,11 @@ if __name__ == "__main__":
     print(f"Test - MAE: {mae_test:.4f}, RMSE: {rmse_test:.4f}")
 
     # Recomanacions per a un usuari
-    user_id = 123
+    user_id = 29
     recommendations = recommender.recomana(user_id, topN=5)
     print(f"Recomanacions per a l'usuari {user_id}:\n{recommendations}")
 
+<<<<<<< HEAD
     print(f"Temps total: {time.time() - start_time:.2f} segons")
 
     import seaborn as sns
@@ -142,3 +158,7 @@ if __name__ == "__main__":
     plt.xlabel('Mètrica')
     plt.legend(title='Mètode')
     plt.show()
+=======
+    # Plot errors
+    recommender.plot_errors(mae_val_cos, mae_val_per, rmse_val_cos, rmse_val_per)
+>>>>>>> 3ab8813fc9b48ae8066245a3962dfe121fd25eee

@@ -156,39 +156,3 @@ if __name__ == "__main__":
     rates, movies, key, credit= small_ratings()
     key = keywords(movies, PATH_KEYWORDS)
     #ground, ratingst = ground_truth(rates)
- 
-    # links = links(PATH_LINKS)
-    # links_small = links(PATH_LINKS_SMALL)
-    # movies = movies_metadata(PATH_MOVIES)
-    # ratings = data_ratings(PATH_RATINGS)
-    
-
-    # print('CREDITS\n')
-    # print(cast.info())
-    # time.sleep(5)
-    # print(crew.info())
-    # time.sleep(5)
-
-    # print('\n\nKEYWORDS\n',)
-    # print(keywords.info())
-    # time.sleep(5)
-
-    # print('\n\nLINKS\n')
-    # print(links.info())
-    # time.sleep(5)
-
-    # print('\n\nLINKS_SMALL\n',)
-    # print(links_small.info())
-    # time.sleep(5)
-
-    # print('\n\nMOVIES\n')
-    # print(movies.info())
-    # time.sleep(5)
-
-    # print('\n\nRATINGS\n')
-    # print(ratings.info())
-    # time.sleep(5)
-
-    # print('\n\nRATINGS_SMALL\n')
-    # print(ratings_small.info())
-    # time.sleep(5)

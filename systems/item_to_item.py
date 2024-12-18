@@ -1,115 +1,128 @@
 import pandas as pd
+import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+import sys
+import os
+
+script_dir = os.path.dirname(os.path.realpath(__file__))
+parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
+sys.path.append(parent_dir)
+from sklearn.model_selection import train_test_split
+from data_preprocessing.preprocessing_csv import small_ratings, ground_truth
 
 class ItemItemRecommender:
-    def __init__(self):
-        """
-        Inicialitza el sistema de recomanació basat en ítems amb les dades de valoracions i ítems.
-        """
-        self.__ratings = None
-        self.__ratings_matrix = None
-        self.__item_similarity = None
+    def __init__(self, ratings=None, items=None):
+        self.ratings = ratings
+        self.items = items
+        self.ratings_matrix = None
+        self.item_similarity = None
 
-    def load_data(self, file_path):
-        """
-        Carrega les dades de valoracions des d'un fitxer CSV.
-        """
-        try:
-            self.__ratings = pd.read_csv(file_path)
-            if self.__ratings.isnull().values.any():
-                print("Atenció: Hi ha valors nuls a les dades carregades.")
+    def load_data(self, ratings, items):
+        """Carrega i processa les dades."""
+        self.ratings = ratings
+        self.items = items
+        self.ratings_matrix = self.ratings.pivot_table(index='id', columns='user', values='rating')
 
-            # Creem la matriu de ratings (usuaris x ítems) com un DataFrame
-            self.__ratings_matrix = self.__ratings.pivot_table(index='userId', columns='movieId', values='rating')
-
-            # Omplim NaN amb 0 (necessari per a similitud de cosinus)
-            self.__ratings_matrix = self.__ratings_matrix.fillna(0)
-
-        except Exception as e:
-            print(f"Error carregant el fitxer: {e}")
-
-    @property
-    def item_similarity(self):
-        return self.__item_similarity
-
-    def similarity_matrix(self, method='cosine'):
-        """
-        Crea una matriu de similitud entre ítems utilitzant el mètode especificat.
-        """
+    def calculate_similarity_matrix(self, method='cosine'):
+        """Calcula la matriu de similitud entre ítems."""
         if method == 'cosine':
-            # Similitud de cosinus
-            similarity_matrix = cosine_similarity(self.__ratings_matrix.T)
-            self.__item_similarity = pd.DataFrame(
-                similarity_matrix, 
-                index=self.__ratings_matrix.columns, 
-                columns=self.__ratings_matrix.columns
-            )
+            similarity = cosine_similarity(self.ratings_matrix.fillna(0))  # Ja no cal transposar
+            self.item_similarity = pd.DataFrame(similarity, index=self.ratings_matrix.index, columns=self.ratings_matrix.index)
         elif method == 'pearson':
-            # Similitud de Pearson com una correlació
-            self.__item_similarity = self.__ratings_matrix.corr(method='pearson')
+            similarity = self.ratings_matrix.corr(method='pearson')
+            # Assegurem que la matriu sigui quadrada i alineada amb els índexs originals
+            self.item_similarity = similarity.reindex(index=self.ratings_matrix.index, columns=self.ratings_matrix.index)
         else:
-            raise ValueError("Mètode desconegut: només 'cosine' o 'pearson' són vàlids.")
+            raise ValueError("Mètode desconegut: només 'cosine' o 'pearson'.")
 
-    def get_similar_items(self, item_id, top_n=5, method='cosine'):
-        """
-        Retorna els ítems més similars a un ítem donat.
-        :param item_id: ID de l'ítem per al qual es volen recomanacions
-        :param top_n: Nombre d'ítems similars que es volen obtenir
-        :param method: Mètode de similitud ('cosine' o 'pearson')
-        :return: DataFrame amb els ítems més similars
-        """
-        self.similarity_matrix(method)
+    def predict_rating(self, user_id, item_id, topN=5, similarity_threshold=0.1):
+        """Prediu la valoració d'un usuari per un ítem."""
+        if user_id not in self.ratings_matrix.columns or item_id not in self.ratings_matrix.index:
+            return np.nan
 
-        if item_id not in self.__item_similarity.columns:
-            print(f"Warning: Ítem {item_id} no trobat a la matriu de similitud.")
-            return pd.Series(dtype=float)  # Retorna un Series buit
+        item_similarities = self.item_similarity.loc[item_id].drop(item_id)  # Excloem l'ítem actual
+        filtered_items = item_similarities[item_similarities > similarity_threshold]
 
-        similarity_scores = self.__item_similarity[item_id]
-        similar_items = similarity_scores.sort_values(ascending=False).head(top_n + 1)  # Incloent-se a si mateix
-        #check if item_id in similar_items
-        if item_id in similar_items:
-            return similar_items.drop(item_id)  # Excloem el propi ítem
-        return similar_items
+        effective_topN = min(topN, len(filtered_items))
+        top_similar_items = filtered_items.sort_values(ascending=False).head(effective_topN)
+        ratings_by_user = self.ratings_matrix.loc[top_similar_items.index, user_id]
+        valid_ratings = ratings_by_user.dropna()
 
-    def recommend_for_user(self, user_id, top_n=5, method='cosine'):
-        """
-        Recomana ítems a un usuari basat en els ítems que ha valorat més altament.
-        :param user_id: ID de l'usuari
-        :param top_n: Nombre de recomanacions
-        :param method: Mètode de similitud ('cosine' o 'pearson')
-        :return: DataFrame amb les recomanacions per a l'usuari
-        """
-        if user_id not in self.__ratings_matrix.index:
+        if valid_ratings.empty:
+            return self.ratings_matrix.loc[item_id].mean()
+
+        relevant_similarities = top_similar_items[valid_ratings.index]
+        numerator = (valid_ratings * relevant_similarities).sum()
+        denominator = relevant_similarities.abs().sum()
+
+        if denominator == 0:
+            return self.ratings_matrix.loc[item_id].mean()
+
+        return numerator / denominator
+
+    def recommend_for_user(self, user_id, topN=5):
+        """Recomana ítems a un usuari basant-se en els ítems més valorats per aquest usuari."""
+        if user_id not in self.ratings_matrix.columns:
             print(f"Warning: Usuari {user_id} no trobat a les dades.")
-            return pd.Series(dtype=float)
+            return pd.DataFrame(columns=['title', 'predicted_rating'])
 
-        user_ratings = self.__ratings_matrix.loc[user_id]
+        user_ratings = self.ratings_matrix[user_id]
+        mean_user_rating = user_ratings.mean()  # Normalitzem les valoracions
+        rated_items = user_ratings.dropna().sort_values(ascending=False).index
+
         recommendations = {}
-
-        for item_id, rating in user_ratings[user_ratings > 0].items():
-            similar_items = self.get_similar_items(item_id, top_n=top_n, method=method)
-
+        for item_id in rated_items:
+            similar_items = self.item_similarity.loc[item_id].drop(item_id).sort_values(ascending=False)
             for similar_item, similarity in similar_items.items():
-                if similar_item not in recommendations:
-                    recommendations[similar_item] = 0
+                if similar_item not in user_ratings or pd.isna(user_ratings[similar_item]):
+                    if similar_item not in recommendations:
+                        recommendations[similar_item] = 0
+                    # Utilitzem la valoració normalitzada
+                    recommendations[similar_item] += similarity * (user_ratings[item_id] - mean_user_rating)
 
-                recommendations[similar_item] += similarity * rating
+        # Normalitzem per la suma de similituds
+        for item in recommendations:
+            recommendations[item] = recommendations[item] + mean_user_rating
 
-        # Ordenem les recomanacions per puntuació
-        recommended_items = pd.Series(recommendations).sort_values(ascending=False).head(top_n)
-        return recommended_items
+        recommended_items = pd.Series(recommendations).sort_values(ascending=False).head(topN)
+        recommended_items = recommended_items.reset_index()
+        recommended_items.columns = ['id', 'predicted_rating']
+        recommended_items = pd.merge(recommended_items, self.items[['id', 'title']], on='id', how='left')
+
+        return recommended_items[['title', 'predicted_rating']]
+
+    def evaluate_model(self, data, topN=5):
+        """Avalua el model segons MAE i RMSE."""
+        predictions = data.apply(lambda row: self.predict_rating(row['user'], row['id'], topN=topN), axis=1)
+        mae = (data['rating'] - predictions).abs().mean()
+        rmse = np.sqrt(((data['rating'] - predictions) ** 2).mean())
+        return mae, rmse
 
 if __name__ == "__main__":
+    # Exemple d'ús
     recommender = ItemItemRecommender()
-    recommender.load_data('./datasets/ratings_small.csv')
 
-    user_id = 402
-    item_id = 13
+    # Carregar les dades
+    ratings, movies, _, _ = small_ratings()
+    train_data, test_data = train_test_split(ratings, train_size=0.7, random_state=42)
+    ground_truth_df, ratings = ground_truth(ratings)
+    recommender.load_data(train_data, movies)
+
+    user_id = 100
+
+    # Avaluació amb similitud cosinus
+    recommender.calculate_similarity_matrix(method='cosine')
+    mae_val, rmse_val = recommender.evaluate_model(ground_truth_df)
+    print(f"Validació (Cosinus) - MAE: {mae_val:.4f}, RMSE: {rmse_val:.4f}")
+
+    # Avaluació amb correlació de Pearson
+    recommender.calculate_similarity_matrix(method='pearson')
+    mae_val, rmse_val = recommender.evaluate_model(ground_truth_df)
+    print(f"Validació (Pearson) - MAE: {mae_val:.4f}, RMSE: {rmse_val:.4f}")
 
     # Recomanacions per a un usuari
-    recommendations = recommender.recommend_for_user(user_id, top_n=5, method='cosine')
-    print(f"Recomanacions per a l'usuari {user_id} (cosinus):\n{recommendations}")
+    recommender.calculate_similarity_matrix(method='cosine')
+    recommendations = recommender.recommend_for_user(user_id, topN=5)
+    print(f"Recomanacions per a l'usuari {user_id}:")
+    print(recommendations)
 
-    # Similitud per a un ítem
-    similar_items = recommender.get_similar_items(item_id, top_n=5, method='cosine')
-    print(f"\nÍtems similars a l'ítem {item_id} (cosinus):\n{similar_items}")
