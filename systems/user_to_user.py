@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import time
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
 import sys
 import os
 
@@ -82,7 +85,6 @@ class UserUserRecommender:
             predictions[movie_id] = self.predict_rating(user_id, movie_id, topN=topN)
 
         recommended = pd.Series(predictions).sort_values(ascending=False)
-        print(recommended)
         recommended=recommended[:topN]
         recommended_movies = recommended.reset_index()
         recommended_movies.columns = ['id', 'predicted_rating']
@@ -90,10 +92,23 @@ class UserUserRecommender:
 
         return recommended_movies[['title', 'predicted_rating']]
 
+    def plot_errors(self, mae_val_cos, mae_val_per, rmse_val_cos, rmse_val_per):
+        data = pd.DataFrame({
+            'Mètode': ['Cosinus', 'Pearson', 'Cosinus', 'Pearson'],
+            'Mètrica': ['MAE', 'MAE', 'RMSE', 'RMSE'],
+            'Valor': [mae_val_cos, mae_val_per, rmse_val_cos, rmse_val_per]
+        })
+
+        plt.figure(figsize=(8, 6))
+        sns.barplot(data=data, x='Mètrica', y='Valor', hue='Mètode', palette='pastel')
+        plt.title('Comparativa d\'errors segons la similitud (conjunt de validació)')
+        plt.ylabel('Valor')
+        plt.xlabel('Mètrica')
+        plt.legend(title='Mètode')
+        plt.show()
 
 
 if __name__ == "__main__":
-    start_time = time.time()
     recommender = UserUserRecommender()
 
     # Carregar les dades
@@ -104,21 +119,22 @@ if __name__ == "__main__":
 
     # Avaluació amb similitud cosinus
     recommender.calculate_similarity_matrix(method='cosine')
-    mae_val, rmse_val = recommender.evaluate_model(ground_truth_df)
-    print(f"Validació (Cosinus) - MAE: {mae_val:.4f}, RMSE: {rmse_val:.4f}")
+    mae_val_cos, rmse_val_cos = recommender.evaluate_model(ground_truth_df)
+    print(f"Validació (Cosinus) - MAE: {mae_val_cos:.4f}, RMSE: {rmse_val_cos:.4f}")
 
     # Avaluació amb correlació de Pearson
     recommender.calculate_similarity_matrix(method='pearson')
-    mae_val, rmse_val = recommender.evaluate_model(ground_truth_df)
-    print(f"Validació (Pearson) - MAE: {mae_val:.4f}, RMSE: {rmse_val:.4f}")
+    mae_val_per, rmse_val_per = recommender.evaluate_model(ground_truth_df)
+    print(f"Validació (Pearson) - MAE: {mae_val_per:.4f}, RMSE: {rmse_val_per:.4f}")
 
     # Avaluació amb conjunt de test
     mae_test, rmse_test = recommender.evaluate_model(test_data)
     print(f"Test - MAE: {mae_test:.4f}, RMSE: {rmse_test:.4f}")
 
     # Recomanacions per a un usuari
-    user_id = 123
+    user_id = 29
     recommendations = recommender.recomana(user_id, topN=5)
     print(f"Recomanacions per a l'usuari {user_id}:\n{recommendations}")
 
-    print(f"Temps total: {time.time() - start_time:.2f} segons")
+    # Plot errors
+    recommender.plot_errors(mae_val_cos, mae_val_per, rmse_val_cos, rmse_val_per)
