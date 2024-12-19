@@ -15,23 +15,34 @@ sys.path.append(parent_dir)
 from data_preprocessing.preprocessing_csv import small_ratings, ground_truth
 
 class SVDRecommender:
-    def __init__(self, n_factors=50, random_state=42, ratings, data):
-        self.model = SVD(n_factors, random_state)
-        self.ratings = small_ratings()
+    def __init__(self, ratings=None, data=None, n_factors=50, random_state=42):
+        self.model = self.model_n_factors(n_factors)
+        self.ratings = ratings
         self.data = data
-        self.train, self.test = train_test_split(data, test_size=0.2, random_state=42)
+        self.train, self.test = train_test_split(data, test_size=0.2, random_state=random_state)
 
-    def train_model(self):
-        self.model.fit(self.train)
-        predictions = self.model.test(self.test)
+    def model_n_factors(self, n_factors):
+        return SVD(n_factors, random_state=42)
+
+    def train_model(self, model=None):
+        model = model if model is not None else self.model
+
+        model.fit(self.train)
+        predictions = model.test(self.test)
         return predictions
 
     def recommend_for_user(self, user_id, top_n=5):
+        self.train_model()
         user_ratings = self.ratings[self.ratings['userId'] == user_id]['movieId'].values
         all_movie_ids = self.ratings['movieId'].unique()
         unrated_movies = [movie_id for movie_id in all_movie_ids if movie_id not in user_ratings]
         predicted_scores = [(movie_id, self.model.predict(user_id, movie_id).est) for movie_id in unrated_movies]
         predicted_scores.sort(key=lambda x: x[1], reverse=True)
+
+        print("Top recomanacions:")
+        for movie_id, score in predicted_scores[:top_n]:
+            print(f"Pel·lícula ID: {movie_id}, Predicció: {score:.2f}")
+
         return predicted_scores[:top_n]
 
     def get_true_and_predicted(self):
@@ -46,10 +57,8 @@ class SVDRecommender:
         rmse_values = []
 
         for n in n_factors_list:
-            model = SVD(n_factors=n, random_state=42)
-            svd = SVDRecommender(model, ratings, data)
-
-            predictions = svd.train_model()
+            model = self.model_n_factors(n)
+            predictions = self.train_model(model)
             rmse = accuracy.rmse(predictions, verbose=False)
             rmse_values.append(rmse)
             print(f"n_factors: {n}, RMSE: {rmse:.4f}")
@@ -63,12 +72,12 @@ class SVDRecommender:
         plt.show()
 
     def get_model_metrics(self):
-        predictions = svd.train_model()
+        predictions = self.train_model()
         rmse = accuracy.rmse(predictions, verbose=False)
         print(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
 
         # Separem els ratings que són True amb els predits pel model
-        true_ratings, predicted_ratings = svd.get_true_and_predicted()
+        true_ratings, predicted_ratings = self.get_true_and_predicted()
         mae = mean_absolute_error(true_ratings, predicted_ratings)
         print(f"MAE: {mae:.4f}")
 
@@ -116,19 +125,15 @@ class SVDRecommender:
 
 
 if __name__ == '__main__':
-    ratings = pd.read_csv("./datasets/ratings_small.csv")
+    ratings, _, _, _ = small_ratings()
     reader = Reader(rating_scale=(0.5, 5)) 
-    data = Dataset.load_from_df(ratings[['userId', 'movieId', 'rating']], reader)
+    data = Dataset.load_from_df(ratings[['user', 'id', 'rating']], reader)
 
-    svd = SVDRecommender(model, ratings, data)
+    svd = SVDRecommender(ratings, data)
 
     n_factors_list = [10, 20, 50, 100, 150, 200]
     svd.get_root_mean_squared_error(n_factors_list)
 
-    # Mostrem recomenacions de pel·lícules amb model ja entrenat
-    recomendations = svd.recommend_for_user(10, 5)
-    print("Top recomanacions:")
-    for movie_id, score in recomendations:
-        print(f"Pel·lícula ID: {movie_id}, Predicció: {score:.2f}")
+    svd.recommend_for_user(10, 5)
 
     svd.get_model_metrics()
