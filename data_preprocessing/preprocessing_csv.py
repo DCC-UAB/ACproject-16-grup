@@ -38,7 +38,7 @@ def movies_metadata(path=PATH_MOVIES):
     items["belongs_to_collection"] = items["belongs_to_collection"].apply(
         lambda x: None if x == {} else x
     )
-
+    
     # Processament columnes: genres, production_companies, production_countries, spoken_languages
     items["genres"] = (
         items["genres"]

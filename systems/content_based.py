@@ -119,15 +119,19 @@ if __name__ == '__main__':
 
     recommender.load_data(ratings, movies, keywords, credits)
     recommender.merge_data()
-    similarity_method = 'cosine'
-    recommender.compute_similarity(method=similarity_method)
+    recommender.compute_similarity(method="cosine")
     
     user_id = 1
     recommendations = recommender.find_similar_for_user(user_id, 10, 3)
-    print(f"Recomenacions per l'usuari {user_id} amb similaritat {similarity_method}:")
+    print(f"Recomenacions segons Cosine per l'usuari {user_id}:")
     print(recommendations)
 
-    recommender.evaluate_model(test_data)
+    recommender.compute_similarity(method="pearson")
+    recommendations = recommender.find_similar_for_user(user_id, 10, 3)
+    print(f"Recomenacions segons Pearson per l'usuari {user_id}:")
+    print(recommendations)
+
+    #recommender.evaluate_model(test_data)
 
 
     
