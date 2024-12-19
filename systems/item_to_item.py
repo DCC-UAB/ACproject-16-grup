@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import sys
 import os
+import time
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
@@ -99,6 +100,7 @@ class ItemItemRecommender:
         return mae, rmse
 
 if __name__ == "__main__":
+    start_time = time.time()
     # Exemple d'ús
     recommender = ItemItemRecommender()
 
@@ -120,9 +122,16 @@ if __name__ == "__main__":
     mae_val, rmse_val = recommender.evaluate_model(ground_truth_df)
     print(f"Validació (Pearson) - MAE: {mae_val:.4f}, RMSE: {rmse_val:.4f}")
 
+    # Avaluació amb conjunt de test
+    mae_test, rmse_test = recommender.evaluate_model(test_data)
+    print(f"Test - MAE: {mae_test:.4f}, RMSE: {rmse_test:.4f}")
+
     # Recomanacions per a un usuari
     recommender.calculate_similarity_matrix(method='cosine')
     recommendations = recommender.recommend_for_user(user_id, topN=5)
     print(f"Recomanacions per a l'usuari {user_id}:")
     print(recommendations)
+
+    end_time = time.time()  # Temps al final de l'execució
+    print(f"Temps total d'execució: {end_time - start_time:.2f} segons")
 
