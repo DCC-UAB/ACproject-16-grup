@@ -17,74 +17,47 @@ from sklearn.metrics import precision_score, recall_score
 import pandas as pd
 
 
-user_id = int(input("Introdueix l'ID de l'usuari: "))
-rates, movies, keywords, credits = small_ratings()
-movie_id = int(input("Introdueix l'ID de la pel·lícula: "))
+def user_to_user(user_id, rates, movies):
+    user_user = UserUserRecommender()
+    user_user.load_data(rates, movies)
+    user_user.calculate_similarity_matrix(method='cosine')
+    rec = user_user.recomana(user_id, topN=5)
+    print(f"Recomanacions per a l'usuari {user_id}:\n{rec}")
 
-# User-User
-print("\nUser-User")
-
-user_user = UserUserRecommender()
-user_user.load_data(rates, movies)
-user_user.calculate_similarity_matrix(method='cosine')
-predicted_rating_cosine = user_user.predict_rating(user_id, movie_id, topN=5, similarity_threshold=0.1)
-print(f"Predicció de valoració (cosinus) per l'usuari {user_id} per la pel·lícula {movie_id}: {predicted_rating_cosine}")
-user_user.calculate_similarity_matrix(method='pearson')
-predicted_rating_pearson = user_user.predict_rating(user_id, movie_id, topN=5, similarity_threshold=0.1)
-print(f"Predicció de valoració (pearson) per l'usuari {user_id} per la pel·lícula {movie_id}: {predicted_rating_pearson}")
-
-actual_rating = rates[(rates['user'] == user_id) & (rates['id'] == movie_id)]['rating'].values
-if actual_rating.size > 0:
-    actual_rating = actual_rating[0]
-    print(f"Valoració real per l'usuari {user_id} per la pel·lícula {movie_id}: {actual_rating}")
-    print(f"Error (cosinus): {abs(predicted_rating_cosine - actual_rating):.4f}")
-    print(f"Error (pearson): {abs(predicted_rating_pearson - actual_rating):.4f}")
-
-    mse_cosine = mean_squared_error([actual_rating], [predicted_rating_cosine])
-    print(f"Mean Squared Error (cosinus): {mse_cosine:.4f}")
-
-    mse_pearson = mean_squared_error([actual_rating], [predicted_rating_pearson])
-    print(f"Mean Squared Error (pearson): {mse_pearson:.4f}")
-
-    print(f"Root Mean Squared Error (cosinus): {np.sqrt(mse_cosine):.4f}")
-    print(f"Root Mean Squared Error (pearson): {np.sqrt(mse_pearson):.4f}")
-else:
-    print(f"No hi ha valoració real per l'usuari {user_id} per la pel·lícula {movie_id}")
+def item_to_item(user_id, rates, movies, similarity, n):
+    item_item = ItemItemRecommender()
+    item_item.load_data(rates, movies)
+    item_item.calculate_similarity_matrix(method=similarity)
+    rec = item_item.recommend_for_user(user_id, topN=n)
+    print(rec)
 
 
-# Item-Item
-print("\nItem-Item")
-item_item = ItemItemRecommender()
-item_item.load_data('./datasets/ratings_small.csv')
-rec = item_item.recommend_for_user(user_id, top_n=5, method='cosine')
-print('Recomanacions cosinus:\n',rec)
+def content_based(user_id, rates, movies, keywords, credits, similarity):
+    content_based = ContentBasedRecommender()
+    content_based.load_data(rates, movies, keywords, credits)
+    content_based.merge_data()
+    content_based.compute_similarity(method=similarity)
+    rec = content_based.find_similar_for_user(user_id, 10, 3)
+    print(rec)
 
-# Content-Based
-print("\nContent-Based")
-recommender = ContentBasedRecommender()
-recommender.merge_data()
-# Pearson
-similarity_method = 'pearson'
-recommender.compute_similarity(method=similarity_method)
-recommendations = recommender.find_similar_for_user(user_id, 10, 3)
-print(f"Recomenacions per l'usuari {user_id} amb similaritat {similarity_method}:")
-print(recommendations)
-# Cosine
-similarity_method = 'cosine'
-recommender.compute_similarity(method=similarity_method)
-recommendations = recommender.find_similar_for_user(user_id, 10, 3)
-print(f"Recomenacions per l'usuari {user_id} amb similaritat {similarity_method}:")
-print(recommendations)
+def svd(user_id, rates, movies):
+    reader = Reader(rating_scale=(0.5, 5)) 
+    data = Dataset.load_from_df(rates[['user', 'id', 'rating']], reader)
+    svd = SVDRecommender(rates, movies, data)
+    rec = svd.recommend_for_user(user_id)
+    print(rec)
 
-# SVD
-print("\nSVD")
-rates = pd.read_csv("./datasets/ratings_small.csv")
-model = SVD(n_factors=50, random_state=42) 
-reader = Reader(rating_scale=(0.5, 5)) 
-data = Dataset.load_from_df(rates[['userId', 'movieId', 'rating']], reader)
-svd = SVDRecommender(model, rates, data)
-predictions = svd.train_model()
-recomendations=svd.recommend_for_user(10, 5)
-print("Top recomanacions:")
-for movie_id, score in recomendations:
-    print(f"Pel·lícula ID: {movie_id}, Predicció: {score:.2f}")
+
+if __name__ == '__main__':
+    user_id = int(input("Introdueix l'ID de l'usuari: "))
+    rates, movies, keywords, credits = small_ratings()
+    print("Recomanador User-to-User:")
+    user_to_user(user_id, rates, movies)
+    print("\nRecomanador Item-to-Item:")
+    item_to_item(user_id, rates, movies, 'cosine', 5)
+    item_to_item(user_id, rates, movies, 'pearson', 5)
+    print("\nRecomanador Content-Based:")
+    content_based(user_id, rates, movies, keywords, credits, 'cosine')
+    content_based(user_id, rates, movies, keywords, credits, 'pearson')
+    print("\nRecomanador SVD:")
+    svd(user_id, rates, movies)

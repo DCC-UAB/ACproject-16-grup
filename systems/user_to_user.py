@@ -87,7 +87,6 @@ class UserUserRecommender:
             predictions[movie_id] = self.predict_rating(user_id, movie_id, topN=topN)
 
         recommended = pd.Series(predictions).sort_values(ascending=False)
-        print(recommended)
         recommended=recommended[:topN]
         recommended_movies = recommended.reset_index()
         recommended_movies.columns = ['id', 'predicted_rating']

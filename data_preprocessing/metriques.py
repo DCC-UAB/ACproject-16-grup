@@ -6,25 +6,16 @@ import seaborn as sns
 import matplotlib.ticker as ticker
 from ast import literal_eval
 import itertools
-
-from data_preprocessing.preprocessing_csv import movies_metadata, data_ratings
+import sys
+import os
+script_dir = os.path.dirname(os.path.realpath(__file__))
+parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
+sys.path.append(parent_dir)
+from data_preprocessing.preprocessing_csv import small_ratings
 
 class preprocessing:
     def __init__(self):
-        self.ratings = data_ratings('./datasets/ratings.csv')
-        self.credits = pd.read_csv("./datasets/credits.csv")
-        self.movies = movies_metadata("./datasets/movies_metadata.csv")
-        # self.preprocessing_data()
-        self.movies = self.movies[self.movies["id"].isin(self.credits["id"])]
-        # self.keywords = pd.read_csv("./datasets/keywords.csv")
-        # self.links = pd.read_csv("./datasets/links.csv")
-
-    # def preprocessing_data(self):
-    #     self.movies['id'] = pd.to_numeric(self.movies['id'], errors='coerce')
-    #     self.movies = self.movies.dropna(subset=['id'])
-    #     self.movies['id'] = self.movies['id'].astype('int64')
-    #     self.movies = self.movies.convert_dtypes()
-    #     return self.movies
+        self.ratings, self.movies, self.credits, self.keywords = small_ratings()
 
     # Funció per mostrar la distribució de les puntuacions
     def display_rating_distribution(self):
@@ -125,8 +116,8 @@ class preprocessing:
 
     # Funció per analitzar si els directors i actors més populars influeixen en la popularitat de les pel·lícules
     def get_most_popular_cast_crew(self):
-        crew = self.credits["crew"].apply(literal_eval)
-        cast = self.credits["cast"].apply(literal_eval)
+        crew = self.credits["director"].apply(literal_eval)
+        cast = self.credits["actors"].apply(literal_eval)
 
         self.credits["directors"] = crew.apply(
             lambda x: [i["name"] for i in x if i["job"] == "Director"]
@@ -204,6 +195,15 @@ class preprocessing:
         plt.show()
 
 
+    def nan_values(self):
+        missing_df = self.movies.isnull().sum(axis=0).reset_index()
+        missing_df.columns = ['column_name', 'missing_count']
+        missing_df['filling_factor'] = (self.movies.shape[0] 
+                                        - missing_df['missing_count']) / self.movies.shape[0] * 100
+        missing_df = missing_df.sort_values('filling_factor').reset_index(drop = True)
+        print(missing_df)
+
+
 if __name__ == "__main__":
     p = preprocessing()
     p.display_rating_distribution()
@@ -213,5 +213,7 @@ if __name__ == "__main__":
     p.analitza_generes()
     p.movies_runtime_distribution()
     p.vote_vs_rate()
+    p.nan_values()
+
     p.get_most_popular_cast_crew()
 
