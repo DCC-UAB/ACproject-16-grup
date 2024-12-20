@@ -24,3 +24,7 @@
     1. distribució i funcionalitat dels recomanadors que no estàn plantejats per tenir train-test
 
 
+### **SETMANA 3**
+1. creació de ground truth per avaluar els models generats
+2. analitzar els resultats obtinguts a les mètriques d'avaluació
+3. obtenció dels keywords restants
