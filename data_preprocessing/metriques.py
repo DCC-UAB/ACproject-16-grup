@@ -173,35 +173,16 @@ class preprocessing:
         plt.xlabel("Pel·lícules")
         plt.ylabel("Usuaris")
         plt.show()
-    
-    def user_network(self):
-        """
-        Mostra la xarxa d'usuaris.
-        """
-        user_activity = self.ratings['user'].value_counts()
-        active_users = user_activity[user_activity >= 100].index
-        active_ratings = self.ratings[self.ratings['user'].isin(active_users)]
-        user_movie_matrix = pd.pivot_table(active_ratings, values='rating', index='user', columns='id', fill_value=0)
-        user_similarity = user_movie_matrix.corr()
-
-        plt.figure(figsize=(12, 8))
-        sns.heatmap(user_similarity, cmap="viridis", cbar=True, xticklabels=False, yticklabels=False)
-        plt.title("Similaritat entre Usuaris")
-        plt.xlabel("Usuaris")
-        plt.ylabel("Usuaris")
-        plt.show()
-
 
 
 if __name__ == "__main__":
     p = preprocessing()
-    # p.numerical_analysis()
-    # p.ratings_per_user_distribution()
-    # p.ratings_distribution()
-    # p.ratings_per_movie_distribution()
-    # p.dataset_density()
-    # p.vote_vs_rate()
-    # p.top_rated_movies()
-    # p.analitza_generes()
-    # p.movies_runtime_distribution()
-    p.user_network()
+    p.numerical_analysis()
+    p.ratings_per_user_distribution()
+    p.ratings_distribution()
+    p.ratings_per_movie_distribution()
+    p.dataset_density()
+    p.vote_vs_rate()
+    p.top_rated_movies()
+    p.analitza_generes()
+    p.movies_runtime_distribution()
