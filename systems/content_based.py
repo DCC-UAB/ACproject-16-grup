@@ -109,6 +109,11 @@ class ContentBasedRecommender:
 
         return pd.DataFrame(recommendations)
 
+    def get_rated_movies_by_user(self, user_id):
+        user_ratings = self.ratings[self.ratings['user'] == user_id]
+        rated_movies = pd.merge(user_ratings, self.movies[['id', 'title']], left_on='id', right_on='id', how='left')
+        return rated_movies[['title', 'rating']]
+
 
 
 if __name__ == '__main__':
@@ -126,16 +131,18 @@ if __name__ == '__main__':
     print(f"Recomenacions segons Cosine per l'usuari {user_id}:")
     print(recommendations)
 
-<<<<<<< HEAD
     #train_data, test_data = train_test_split(recommender.ratings, test_size=0.2, random_state=42)
-=======
     recommender.compute_similarity(method="pearson")
     recommendations = recommender.find_similar_for_user(user_id, 10, 3)
     print(f"Recomenacions segons Pearson per l'usuari {user_id}:")
     print(recommendations)
-
->>>>>>> 4f32a19db91c3fdabf08af2f8220937b58ee4758
     #recommender.evaluate_model(test_data)
+
+    rated_movies = recommender.get_rated_movies_by_user(user_id=1)
+    print(f"Pel·lícules puntuades per l'usuari 1:")
+    print(rated_movies)
+
+
 
 
     
