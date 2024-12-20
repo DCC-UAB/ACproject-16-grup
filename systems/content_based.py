@@ -15,10 +15,16 @@ from data_preprocessing.preprocessing_csv import small_ratings
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 class ContentBasedRecommender:
-    def __init__(self):
+    def __init__(self, ratings=None, movies=None, keywords=None, credits=None):
         self.ratings, self.movies, self.keywords, self.credits = small_ratings()
         self.similarity_matrix = None
         self.similarity_method = None
+
+    def load_data(self, ratings, movies, keywords, credits):
+        self.ratings = ratings
+        self.movies = movies
+        self.keywords = keywords
+        self.credits = credits
 
     def merge_data(self):
         self.movies = pd.merge(self.movies, self.keywords, on='id', how='left')
@@ -28,7 +34,6 @@ class ContentBasedRecommender:
         ]
 
         self.movies = pd.merge(self.movies, self.credits, on='id', how='left')
-
         self.movies['keywords'] = self.movies['keywords'].fillna('').apply(lambda x: ' '.join(x) if isinstance(x, list) else x)
         self.movies['actors'] = self.movies['actors'].fillna('')
         self.movies['director'] = self.movies['director'].fillna('')
@@ -42,9 +47,7 @@ class ContentBasedRecommender:
                 ])
             ), axis=1
         )
-
         return self.movies
-
 
 
     def compute_similarity(self, method='cosine'):
@@ -73,8 +76,7 @@ class ContentBasedRecommender:
 
         recommendations = {}
         for idx in watched_indices:
-            # Comprovem si l'índex està dins de la matriu de similitud
-            if idx < len(self.similarity_matrix):  # Verifiquem que l'índex no estigui fora de límit
+            if idx < len(self.similarity_matrix): 
                 sim_scores = list(enumerate(self.similarity_matrix[idx]))
                 for movie_idx, score in sim_scores:
                     movie_id = self.movies.iloc[movie_idx]['id']
@@ -90,19 +92,14 @@ class ContentBasedRecommender:
 
 
     def evaluate_model(self, test_data):
-        # Merge the ratings with movie titles
         user_ratings_with_titles = pd.merge(test_data, self.movies[['id', 'title']], on='id', how='left')
-
-        # For each user, get the movies rated 3 or more (adjust this threshold as needed)
         user_ratings_with_titles = user_ratings_with_titles[user_ratings_with_titles['rating'] >= 3]
         
-        # Evaluate for each user
         recommendations = []
         for user_id in user_ratings_with_titles['user'].unique():
             rated_titles = user_ratings_with_titles[user_ratings_with_titles['user'] == user_id]['title'].values
             recommended = self.find_similar_for_user(user_id, n=10)
 
-            # Calculate precision, recall, or any other metric
             recommended_titles = recommended['Title'].values
             intersection = len(set(rated_titles).intersection(set(recommended_titles)))
             precision = intersection / len(recommended_titles) if len(recommended_titles) > 0 else 0
@@ -116,15 +113,28 @@ class ContentBasedRecommender:
 
 if __name__ == '__main__':
     recommender = ContentBasedRecommender()
+    ratings, movies, keywords, credits = small_ratings()
+    
+    train_data, test_data = train_test_split(ratings, test_size=0.2, random_state=42)
+
+    recommender.load_data(ratings, movies, keywords, credits)
     recommender.merge_data()
-    similarity_method = 'cosine'
-    recommender.compute_similarity(method=similarity_method)
+    recommender.compute_similarity(method="cosine")
+    
     user_id = 1
     recommendations = recommender.find_similar_for_user(user_id, 10, 3)
-    print(f"Recomenacions per l'usuari {user_id} amb similaritat {similarity_method}:")
+    print(f"Recomenacions segons Cosine per l'usuari {user_id}:")
     print(recommendations)
 
+<<<<<<< HEAD
     #train_data, test_data = train_test_split(recommender.ratings, test_size=0.2, random_state=42)
+=======
+    recommender.compute_similarity(method="pearson")
+    recommendations = recommender.find_similar_for_user(user_id, 10, 3)
+    print(f"Recomenacions segons Pearson per l'usuari {user_id}:")
+    print(recommendations)
+
+>>>>>>> 4f32a19db91c3fdabf08af2f8220937b58ee4758
     #recommender.evaluate_model(test_data)
 
 

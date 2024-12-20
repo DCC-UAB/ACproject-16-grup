@@ -15,8 +15,9 @@ sys.path.append(parent_dir)
 from data_preprocessing.preprocessing_csv import small_ratings, ground_truth
 
 class SVDRecommender:
-    def __init__(self, ratings=None, data=None, n_factors=50, random_state=42):
+    def __init__(self, ratings=None, movies=None, data=None, n_factors=50, random_state=42):
         self.model = self.model_n_factors(n_factors)
+        self.movies = movies
         self.ratings = ratings
         self.data = data
         self.train, self.test = train_test_split(data, test_size=0.2, random_state=random_state)
@@ -33,16 +34,13 @@ class SVDRecommender:
 
     def recommend_for_user(self, user_id, top_n=5):
         self.train_model()
-        user_ratings = self.ratings[self.ratings['userId'] == user_id]['movieId'].values
-        all_movie_ids = self.ratings['movieId'].unique()
+        user_ratings = self.ratings[self.ratings['user'] == user_id]['id'].values
+        all_movie_ids = self.ratings['id'].unique()
         unrated_movies = [movie_id for movie_id in all_movie_ids if movie_id not in user_ratings]
         predicted_scores = [(movie_id, self.model.predict(user_id, movie_id).est) for movie_id in unrated_movies]
         predicted_scores.sort(key=lambda x: x[1], reverse=True)
-
-        print("Top recomanacions:")
-        for movie_id, score in predicted_scores[:top_n]:
-            print(f"Pel·lícula ID: {movie_id}, Predicció: {score:.2f}")
-
+        predicted_scores = pd.DataFrame(predicted_scores, columns=['id', 'score'])
+        predicted_scores = pd.merge(predicted_scores, self.movies[['id', 'title']], on='id', how='left')
         return predicted_scores[:top_n]
 
     def get_true_and_predicted(self):
@@ -74,12 +72,10 @@ class SVDRecommender:
     def get_model_metrics(self):
         predictions = self.train_model()
         rmse = accuracy.rmse(predictions, verbose=False)
-        print(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
 
         # Separem els ratings que són True amb els predits pel model
         true_ratings, predicted_ratings = self.get_true_and_predicted()
         mae = mean_absolute_error(true_ratings, predicted_ratings)
-        print(f"MAE: {mae:.4f}")
 
         # Diem que els ratings superiors a la meitat són positius -> "threshold"
         true_labels = (true_ratings > 3).astype(int)
@@ -90,13 +86,8 @@ class SVDRecommender:
         recall = recall_score(true_labels, predicted_scores)
         f1 = f1_score(true_labels, predicted_scores)
         accuracy_metric = accuracy_score(true_labels, predicted_scores)
-
-        print(f"Precision: {precision:.4f}")
-        print(f"Recall: {recall:.4f}")
-        print(f"F1 Score: {f1:.4f}")
-        print(f"Accuracy: {accuracy_metric:.4f}")
-
         self.plot_precision_recall_curve(true_labels, predicted_ratings)
+        return precision, recall, f1, accuracy_metric, rmse, mae
 
     def plot_precision_recall_curve(self, true_labels, predicted_ratings):
         precision_values, recall_values, _ = precision_recall_curve(true_labels, predicted_ratings)
@@ -125,15 +116,20 @@ class SVDRecommender:
 
 
 if __name__ == '__main__':
-    ratings, _, _, _ = small_ratings()
+    ratings, movies, _, _ = small_ratings()
     reader = Reader(rating_scale=(0.5, 5)) 
     data = Dataset.load_from_df(ratings[['user', 'id', 'rating']], reader)
-
-    svd = SVDRecommender(ratings, data)
-
+    svd = SVDRecommender(ratings,movies, data)
     n_factors_list = [10, 20, 50, 100, 150, 200]
     svd.get_root_mean_squared_error(n_factors_list)
 
-    svd.recommend_for_user(10, 5)
+    recomendations = svd.recommend_for_user(10, 5)
+    print(recomendations)
 
-    svd.get_model_metrics()
+    precision, recall, f1, acc, rsme, mae = svd.get_model_metrics()
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"F1 Score: {f1:.4f}")
+    print(f"Accuracy: {acc:.4f}")
+    print(f"RMSE: {rsme:.4f}")
+    print(f"MAE: {mae:.4f}")

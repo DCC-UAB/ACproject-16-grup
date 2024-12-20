@@ -27,11 +27,10 @@ class ItemItemRecommender:
     def calculate_similarity_matrix(self, method='cosine'):
         """Calcula la matriu de similitud entre ítems."""
         if method == 'cosine':
-            similarity = cosine_similarity(self.ratings_matrix.fillna(0))  # Ja no cal transposar
+            similarity = cosine_similarity(self.ratings_matrix.fillna(0))
             self.item_similarity = pd.DataFrame(similarity, index=self.ratings_matrix.index, columns=self.ratings_matrix.index)
         elif method == 'pearson':
             similarity = self.ratings_matrix.corr(method='pearson')
-            # Assegurem que la matriu sigui quadrada i alineada amb els índexs originals
             self.item_similarity = similarity.reindex(index=self.ratings_matrix.index, columns=self.ratings_matrix.index)
         else:
             raise ValueError("Mètode desconegut: només 'cosine' o 'pearson'.")
@@ -59,7 +58,8 @@ class ItemItemRecommender:
         if denominator == 0:
             return self.ratings_matrix.loc[item_id].mean()
 
-        return numerator / denominator
+        predicted_rating = numerator / denominator
+        return np.clip(predicted_rating, 0, 5)  # Limitar el rango a [0, 5]
 
     def recommend_for_user(self, user_id, topN=5):
         """Recomana ítems a un usuari basant-se en els ítems més valorats per aquest usuari."""
@@ -76,14 +76,16 @@ class ItemItemRecommender:
             similar_items = self.item_similarity.loc[item_id].drop(item_id).sort_values(ascending=False)
             for similar_item, similarity in similar_items.items():
                 if similar_item not in user_ratings or pd.isna(user_ratings[similar_item]):
-                    if similar_item not in recommendations:
-                        recommendations[similar_item] = 0
-                    # Utilitzem la valoració normalitzada
-                    recommendations[similar_item] += similarity * (user_ratings[item_id] - mean_user_rating)
+                    if similarity > 0.1:  # Aplicar umbral de similitud
+                        if similar_item not in recommendations:
+                            recommendations[similar_item] = 0
+                        # Utilitzem la valoració normalitzada
+                        recommendations[similar_item] += similarity * (user_ratings[item_id] - mean_user_rating)
+                    
 
         # Normalitzem per la suma de similituds
         for item in recommendations:
-            recommendations[item] = recommendations[item] + mean_user_rating
+            recommendations[item] = np.clip(recommendations[item] + mean_user_rating, 0, 5)  # Limitar el rango a [0, 5]
 
         recommended_items = pd.Series(recommendations).sort_values(ascending=False).head(topN)
         recommended_items = recommended_items.reset_index()
@@ -127,11 +129,10 @@ if __name__ == "__main__":
     print(f"Test - MAE: {mae_test:.4f}, RMSE: {rmse_test:.4f}")
 
     # Recomanacions per a un usuari
-    recommender.calculate_similarity_matrix(method='cosine')
+    recommender.calculate_similarity_matrix(method='pearson')
     recommendations = recommender.recommend_for_user(user_id, topN=5)
     print(f"Recomanacions per a l'usuari {user_id}:")
     print(recommendations)
 
     end_time = time.time()  # Temps al final de l'execució
     print(f"Temps total d'execució: {end_time - start_time:.2f} segons")
-
