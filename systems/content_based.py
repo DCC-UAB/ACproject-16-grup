@@ -124,8 +124,8 @@ if __name__ == '__main__':
     print(f"Recomenacions per l'usuari {user_id} amb similaritat {similarity_method}:")
     print(recommendations)
 
-    train_data, test_data = train_test_split(recommender.ratings, test_size=0.2, random_state=42)
-    recommender.evaluate_model(test_data)
+    #train_data, test_data = train_test_split(recommender.ratings, test_size=0.2, random_state=42)
+    #recommender.evaluate_model(test_data)
 
 
     
