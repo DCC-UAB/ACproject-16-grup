@@ -3,6 +3,8 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import sys
 import os
+import matplotlib.pyplot as plt
+import seaborn as sns
 import time
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -100,6 +102,22 @@ class ItemItemRecommender:
         mae = (data['rating'] - predictions).abs().mean()
         rmse = np.sqrt(((data['rating'] - predictions) ** 2).mean())
         return mae, rmse
+    
+
+    def plot_errors(self, mae_val_cos, mae_val_per, rmse_val_cos, rmse_val_per):
+        data = pd.DataFrame({
+            'Mètode': ['Cosinus', 'Pearson', 'Cosinus', 'Pearson'],
+            'Mètrica': ['MAE', 'MAE', 'RMSE', 'RMSE'],
+            'Valor': [mae_val_cos, mae_val_per, rmse_val_cos, rmse_val_per]
+        })
+
+        plt.figure(figsize=(8, 6))
+        sns.barplot(data=data, x='Mètrica', y='Valor', hue='Mètode', palette='pastel')
+        plt.title('Comparativa d\'errors segons la similitud (conjunt de validació)')
+        plt.ylabel('Valor')
+        plt.xlabel('Mètrica')
+        plt.legend(title='Mètode')
+        plt.show()
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -116,13 +134,13 @@ if __name__ == "__main__":
 
     # Avaluació amb similitud cosinus
     recommender.calculate_similarity_matrix(method='cosine')
-    mae_val, rmse_val = recommender.evaluate_model(ground_truth_df)
-    print(f"Validació (Cosinus) - MAE: {mae_val:.4f}, RMSE: {rmse_val:.4f}")
+    mae_val_cos, rmse_val_cos = recommender.evaluate_model(ground_truth_df)
+    print(f"Validació (Cosinus) - MAE: {mae_val_cos:.4f}, RMSE: {rmse_val_cos:.4f}")
 
     # Avaluació amb correlació de Pearson
     recommender.calculate_similarity_matrix(method='pearson')
-    mae_val, rmse_val = recommender.evaluate_model(ground_truth_df)
-    print(f"Validació (Pearson) - MAE: {mae_val:.4f}, RMSE: {rmse_val:.4f}")
+    mae_val_per, rmse_val_per = recommender.evaluate_model(ground_truth_df)
+    print(f"Validació (Pearson) - MAE: {mae_val_per:.4f}, RMSE: {rmse_val_per:.4f}")
 
     # Avaluació amb conjunt de test
     mae_test, rmse_test = recommender.evaluate_model(test_data)
@@ -136,3 +154,6 @@ if __name__ == "__main__":
 
     end_time = time.time()  # Temps al final de l'execució
     print(f"Temps total d'execució: {end_time - start_time:.2f} segons")
+
+    # Plot errors
+    recommender.plot_errors(mae_val_cos, mae_val_per, rmse_val_cos, rmse_val_per)
