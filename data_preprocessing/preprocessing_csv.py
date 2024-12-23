@@ -4,6 +4,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 import json
 import nltk
+import csv
 
 PATH_MOVIES = "./datasets/movies_metadata.csv"
 PATH_RATINGS = "./datasets/ratings.csv"
@@ -13,6 +14,17 @@ PATH_KEYWORDS = "./datasets/keywords.csv"
 PATH_LINKS = "./datasets/links.csv"
 PATH_LINKS_SMALL = "./datasets/links_small.csv"
 
+def read_binary_csv(path):
+    with open(path, 'rb') as fitxer_binari:
+        binary_data = fitxer_binari.read()
+    descodificacio = binary_data.decode('utf-8')  
+    reader = csv.reader(descodificacio.splitlines(), delimiter=',')
+    dades = [fila for fila in reader]
+
+    header = dades[0]  
+    dades_sense_capcalera = dades[1:]
+    df = pd.DataFrame(dades_sense_capcalera, columns=header)
+    return df
 
 def movies_metadata(path=PATH_MOVIES):
     items = pd.read_csv(path, low_memory=False)
@@ -62,6 +74,7 @@ def movies_metadata(path=PATH_MOVIES):
 
 def data_ratings(movies, path=PATH_RATINGS):
     ratings = pd.read_csv(path)
+    # ratings = read_binary_csv(path)
     ratings = ratings.rename(columns={"userId": "user", "movieId": "id"}) # Renombrar columnes
     ratings = ratings[ratings["id"].isin(movies["id"])] # Filtrar pel·lícules vàlides
     ratings.timestamp = pd.to_datetime(ratings.timestamp, unit="s") # Convertir timestamp a datetime
@@ -201,7 +214,7 @@ def ground_truth(ratings):
 
 
 if __name__ == "__main__":
-    rates, movies, key, credit= small_ratings()
-    #ground, ratings = ground_truth(rates)
-
- 
+    # rates, movies, key, credit= small_ratings()
+    # ground, ratings = ground_truth(rates)
+    ratings = read_binary_csv('./datasets/ratings.csv')
+    # print(ratings.head())
