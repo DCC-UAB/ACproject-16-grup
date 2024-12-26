@@ -52,20 +52,29 @@ class SVDRecommender:
         return np.array(true_ratings), np.array(predicted_ratings)
 
     def get_root_mean_squared_error(self, n_factors_list):
-        rmse_values = []
+        rmse_train_values = []
+        rmse_test_values = []
 
         for n in n_factors_list:
             model = self.model_n_factors(n)
             predictions = self.train_model(model)
-            rmse = accuracy.rmse(predictions, verbose=False)
-            rmse_values.append(rmse)
-            print(f"n_factors: {n}, RMSE: {rmse:.4f}")
+            rmse_train = accuracy.rmse(predictions, verbose=False)
 
-        plt.figure(figsize=(8, 6))
-        plt.plot(n_factors_list, rmse_values, marker='o', linestyle='-', color='r')
-        plt.title("n_factor que s'ajusta més", fontsize = 14)
-        plt.xlabel("n_factors", fontsize = 12)
-        plt.ylabel("RMSE",fontsize = 12)
+            test_predictions = model.test(self.test)
+            rmse_test = accuracy.rmse(test_predictions, verbose=False)
+
+            rmse_train_values.append(rmse_train)
+            rmse_test_values.append(rmse_test)
+
+            print(f"n_factors: {n}, RMSE Train: {rmse_train:.4f}, RMSE Test: {rmse_test:.4f}")
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(n_factors_list, rmse_train_values, marker='o', linestyle='-', color='r', label='Train RMSE')
+        plt.plot(n_factors_list, rmse_test_values, marker='o', linestyle='-', color='b', label='Test RMSE')
+        plt.title("RMSE segons n_factors")
+        plt.xlabel("n_factors")
+        plt.ylabel("RMSE")
+        plt.legend()
         plt.grid(True)
         plt.show()
 
@@ -117,7 +126,7 @@ class SVDRecommender:
 
 if __name__ == '__main__':
     ratings, movies, _, _ = small_ratings()
-    reader = Reader(rating_scale=(0.5, 5)) 
+    reader = Reader(rating_scale=(0.5, 5))
     data = Dataset.load_from_df(ratings[['user', 'id', 'rating']], reader)
     svd = SVDRecommender(ratings,movies, data)
     n_factors_list = [10, 20, 50, 100, 150, 200]
