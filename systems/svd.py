@@ -50,6 +50,13 @@ class SVDRecommender:
         true_ratings, predicted_ratings = self.get_true_and_predicted()
         mae = mean_absolute_error(true_ratings, predicted_ratings)
         return rmse, mae
+    
+    def evaluate_model(self, model, data):
+        """Avalua un model amb el conjunt de dades donat"""
+        predictions = model.test(data)
+        rmse = accuracy.rmse(predictions, verbose=False)
+        mae = accuracy.mae(predictions, verbose=False)
+        return rmse, mae
 
     def get_root_mean_squared_error(self, n_factors_list):
         """Retorna els valors de RMSE per a diferents n_factors"""
