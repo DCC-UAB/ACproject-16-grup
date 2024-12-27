@@ -126,8 +126,8 @@ if __name__ == "__main__":
 
     # Carregar les dades
     ratings, movies, _, _ = small_ratings()
-    train_data, test_data = train_test_split(ratings, train_size=0.7, random_state=42)
     ground_truth_df, ratings = ground_truth(ratings)
+    train_data, test_data = train_test_split(ratings, train_size=0.7, random_state=42)
     recommender.load_data(train_data, movies)
 
     user_id = 100

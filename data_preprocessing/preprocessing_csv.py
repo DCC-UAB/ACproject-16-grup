@@ -195,7 +195,7 @@ def links(path=PATH_LINKS):
 
 def small_ratings(): 
     movies = movies_metadata(PATH_MOVIES)
-    ratings = data_ratings(movies, PATH_RATINGS)
+    ratings = data_ratings(movies, PATH_RATINGS_SMALL)
     movies = movies[movies["id"].isin(ratings["id"])]
     key = keywords(movies, PATH_KEYWORDS)
     castcrew = credits(movies, PATH_CREDITS)
@@ -222,5 +222,4 @@ if __name__ == "__main__":
     # ground, ratings = ground_truth(rates)
     #ratings = read_binary_csv('./datasets/ratings.csv')
     #ratings = data_ratings(movies_metadata(PATH_MOVIES), './datasets/ratings.csv')
-    print(rates.head())
-    print(rates.shape)
+
