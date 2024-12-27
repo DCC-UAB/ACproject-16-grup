@@ -24,6 +24,10 @@ def read_binary_csv(path):
     header = dades[0]  
     dades_sense_capcalera = dades[1:]
     df = pd.DataFrame(dades_sense_capcalera, columns=header)
+    df["userId"] = df["userId"].astype(int)
+    df["movieId"] = df["movieId"].astype(int)
+    df["rating"] = df["rating"].astype(float)
+    df["timestamp"] = df["timestamp"].astype(int)
     return df
 
 def movies_metadata(path=PATH_MOVIES):
@@ -73,8 +77,8 @@ def movies_metadata(path=PATH_MOVIES):
 
 
 def data_ratings(movies, path=PATH_RATINGS):
-    ratings = pd.read_csv(path)
-    # ratings = read_binary_csv(path)
+    #ratings = pd.read_csv(path)
+    ratings = read_binary_csv(path)
     ratings = ratings.rename(columns={"userId": "user", "movieId": "id"}) # Renombrar columnes
     ratings = ratings[ratings["id"].isin(movies["id"])] # Filtrar pel·lícules vàlides
     ratings.timestamp = pd.to_datetime(ratings.timestamp, unit="s") # Convertir timestamp a datetime
@@ -191,7 +195,7 @@ def links(path=PATH_LINKS):
 
 def small_ratings(): 
     movies = movies_metadata(PATH_MOVIES)
-    ratings = data_ratings(movies, PATH_RATINGS_SMALL)
+    ratings = data_ratings(movies, PATH_RATINGS)
     movies = movies[movies["id"].isin(ratings["id"])]
     key = keywords(movies, PATH_KEYWORDS)
     castcrew = credits(movies, PATH_CREDITS)
@@ -214,7 +218,9 @@ def ground_truth(ratings):
 
 
 if __name__ == "__main__":
-    # rates, movies, key, credit= small_ratings()
+    rates, movies, key, credit= small_ratings()
     # ground, ratings = ground_truth(rates)
-    ratings = read_binary_csv('./datasets/ratings.csv')
-    # print(ratings.head())
+    #ratings = read_binary_csv('./datasets/ratings.csv')
+    #ratings = data_ratings(movies_metadata(PATH_MOVIES), './datasets/ratings.csv')
+    print(rates.head())
+    print(rates.shape)
