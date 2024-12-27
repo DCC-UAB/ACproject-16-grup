@@ -5,7 +5,6 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
@@ -21,12 +20,14 @@ class ContentBasedRecommender:
         self.similarity_method = None
 
     def load_data(self, ratings, movies, keywords, credits):
+        """Carrega les dades."""
         self.ratings = ratings
         self.movies = movies
         self.keywords = keywords
         self.credits = credits
 
     def merge_data(self):
+        """Fusiona les dades de les pel·lícules amb les paraules clau i els crèdits."""
         self.movies = pd.merge(self.movies, self.keywords, on='id', how='left')
         self.credits = self.credits[
             (self.credits['actors'].notnull() & (self.credits['actors'] != '')) |
@@ -51,6 +52,7 @@ class ContentBasedRecommender:
 
 
     def compute_similarity(self, method='cosine'):
+        """Calcul de la similitud entre les pel·lícules."""
         self.similarity_method = method
         tfidf = TfidfVectorizer(stop_words='english')
 
@@ -67,6 +69,7 @@ class ContentBasedRecommender:
 
 
     def find_similar_for_user(self, user_id, n, nota_minima=3):
+        """Retorna les n pel·lícules més similars a les que ha vist l'usuari."""
         user_movies = self.ratings[(self.ratings['user'] == user_id) & (self.ratings['rating'] >= nota_minima)]
         watched_movie_ids = user_movies['id'].unique()
 
@@ -90,55 +93,36 @@ class ContentBasedRecommender:
             columns=['Title', 'Similarity']
         )
 
-
-    def evaluate_model(self, test_data):
-        user_ratings_with_titles = pd.merge(test_data, self.movies[['id', 'title']], on='id', how='left')
-        user_ratings_with_titles = user_ratings_with_titles[user_ratings_with_titles['rating'] >= 3]
-        
-        recommendations = []
-        for user_id in user_ratings_with_titles['user'].unique():
-            rated_titles = user_ratings_with_titles[user_ratings_with_titles['user'] == user_id]['title'].values
-            recommended = self.find_similar_for_user(user_id, n=10)
-
-            recommended_titles = recommended['Title'].values
-            intersection = len(set(rated_titles).intersection(set(recommended_titles)))
-            precision = intersection / len(recommended_titles) if len(recommended_titles) > 0 else 0
-            recall = intersection / len(rated_titles) if len(rated_titles) > 0 else 0
-
-            recommendations.append({'user_id': user_id, 'precision': precision, 'recall': recall, 'rated_titles': rated_titles, 'recommended_titles': recommended_titles})
-
-        return pd.DataFrame(recommendations)
-
     def get_rated_movies_by_user(self, user_id):
+        """Retorna les pel·lícules puntuades per un usuari."""
         user_ratings = self.ratings[self.ratings['user'] == user_id]
         rated_movies = pd.merge(user_ratings, self.movies[['id', 'title']], left_on='id', right_on='id', how='left')
         return rated_movies[['title', 'rating']]
-
-
+    
 
 if __name__ == '__main__':
+    #Carrega de dades
     recommender = ContentBasedRecommender()
     ratings, movies, keywords, credits = small_ratings()
-    
     train_data, test_data = train_test_split(ratings, test_size=0.2, random_state=42)
 
+    # Carregar el model 
     recommender.load_data(ratings, movies, keywords, credits)
     recommender.merge_data()
     recommender.compute_similarity(method="cosine")
     
+    #Recomanacions per a un usuari
     user_id = 1
     recommendations = recommender.find_similar_for_user(user_id, 10, 3)
     print(f"Recomenacions segons Cosine per l'usuari {user_id}:")
     print(recommendations)
 
-    #train_data, test_data = train_test_split(recommender.ratings, test_size=0.2, random_state=42)
     recommender.compute_similarity(method="pearson")
     recommendations = recommender.find_similar_for_user(user_id, 10, 3)
     print(f"Recomenacions segons Pearson per l'usuari {user_id}:")
     print(recommendations)
-    #recommender.evaluate_model(test_data)
 
-    rated_movies = recommender.get_rated_movies_by_user(user_id=1)
+    rated_movies = recommender.get_rated_movies_by_user(user_id)
     print(f"Pel·lícules puntuades per l'usuari 1:")
     print(rated_movies)
 

@@ -8,13 +8,7 @@ from item_to_item import ItemItemRecommender
 from content_based import ContentBasedRecommender
 from data_preprocessing.preprocessing_csv import small_ratings
 from svd import SVDRecommender
-import numpy as np
-from sklearn.metrics.pairwise import linear_kernel
-from surprise import SVD
-from surprise import Dataset, Reader, accuracy
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import precision_score, recall_score
-import pandas as pd
+from surprise import Dataset, Reader
 
 
 def user_to_user(user_id, rates, movies, similarity='cosine', n=5):
@@ -52,18 +46,24 @@ def svd(user_id, rates, movies):
 if __name__ == '__main__':
     user_id = int(input("Introdueix l'ID de l'usuari: "))
     rates, movies, keywords, credits = small_ratings()
+
     print("Recomanador User-to-User:")
     print("\n\tRecomanacions amb distància cosinus:")
     user_to_user(user_id, rates, movies, 'cosine', 5)
     print("\n\tRecomanacions amb coeficient de Pearson:")
     user_to_user(user_id, rates, movies, 'pearson', 5)
+    
     print("\nRecomanador Item-to-Item:")
     print("\n\tRecomanacions amb distància cosinus:")
     item_to_item(user_id, rates, movies, 'cosine', 5)
     print("\n\tRecomanacions amb coeficient de Pearson:")
     item_to_item(user_id, rates, movies, 'pearson', 5)
+   
     print("\nRecomanador Content-Based:")
+    print("\n\tRecomanacions amb distància cosinus:")
     content_based(user_id, rates, movies, keywords, credits, 'cosine')
+    print("\n\tRecomanacions amb coeficient de Pearson:")
     content_based(user_id, rates, movies, keywords, credits, 'pearson')
+    
     print("\nRecomanador SVD:")
     svd(user_id, rates, movies)
