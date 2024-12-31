@@ -3,8 +3,8 @@ import os
 script_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
 sys.path.append(parent_dir)
-from user_to_user import UserUserRecommender
-from item_to_item import ItemItemRecommender
+from user_to_user2 import UserUserRecommender
+from item_to_item2 import ItemItemRecommender
 from content_based import ContentBasedRecommender
 from data_preprocessing.preprocessing_csv import small_ratings
 from svd import SVDRecommender
