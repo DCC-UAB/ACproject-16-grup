@@ -3,8 +3,8 @@ import os
 script_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
 sys.path.append(parent_dir)
-from user_to_user2 import UserUserRecommender
-from item_to_item2 import ItemItemRecommender
+from user_to_user import UserUserRecommender
+from item_to_item import ItemItemRecommender
 from content_based import ContentBasedRecommender
 from data_preprocessing.preprocessing_csv import small_ratings
 from svd import SVDRecommender
@@ -15,7 +15,7 @@ def user_to_user(user_id, rates, movies, similarity='cosine', n=5):
     user_user = UserUserRecommender()
     user_user.load_data(rates, movies)
     user_user.calculate_similarity_matrix(method=similarity)
-    rec = user_user.recomana(user_id, topN=n)
+    rec = user_user.recommend_for_user(user_id, topN=n)
     print(f"Recomanacions per a l'usuari {user_id}:\n{rec}")
 
 def item_to_item(user_id, rates, movies, similarity, n):

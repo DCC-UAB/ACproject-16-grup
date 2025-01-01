@@ -98,7 +98,6 @@ class ContentBasedRecommender:
         user_ratings = self.ratings[self.ratings['user'] == user_id]
         rated_movies = pd.merge(user_ratings, self.movies[['id', 'title']], left_on='id', right_on='id', how='left')
         return rated_movies[['title', 'rating']]
-    
 
 if __name__ == '__main__':
     #Carrega de dades
@@ -125,8 +124,3 @@ if __name__ == '__main__':
     rated_movies = recommender.get_rated_movies_by_user(user_id)
     print(f"Pel·lícules puntuades per l'usuari 1:")
     print(rated_movies)
-
-
-
-
-    
