@@ -80,16 +80,16 @@ if __name__ == "__main__":
 
     # Avaluació amb similitud cosinus
     recommender.calculate_similarity_matrix(method='cosine')
-    mae_val_cos, rmse_val_cos = recommender.evaluate_model(ground_truth_df)
+    mae_val_cos, rmse_val_cos = recommender.evaluate_model(ground_truth_df, system="item")
     print(f"Validació (Cosinus) - MAE: {mae_val_cos:.4f}, RMSE: {rmse_val_cos:.4f}")
 
     # Avaluació amb correlació de Pearson
     recommender.calculate_similarity_matrix(method='pearson')
-    mae_val_per, rmse_val_per = recommender.evaluate_model(ground_truth_df)
+    mae_val_per, rmse_val_per = recommender.evaluate_model(ground_truth_df, system="item")
     print(f"Validació (Pearson) - MAE: {mae_val_per:.4f}, RMSE: {rmse_val_per:.4f}")
 
     # Avaluació amb conjunt de test
-    mae_test, rmse_test = recommender.evaluate_model(test_data)
+    mae_test, rmse_test = recommender.evaluate_model(test_data, system="item")
     print(f"Test - MAE: {mae_test:.4f}, RMSE: {rmse_test:.4f}")
 
     # Recomanacions per a un usuari
