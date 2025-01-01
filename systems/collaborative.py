@@ -64,9 +64,9 @@ class Collaborative:
         else:
             return np.clip(predicted_rating, 0, 5)
 
-    def evaluate_model(self, data, topN=5):
+    def evaluate_model(self, data, system, topN=5):
         """Avalua el model segons MAE i RMSE."""
-        predictions = data.apply(lambda row: self.predict_rating(row['user'], row['id'], topN=topN), axis=1)
+        predictions = data.apply(lambda row: self.predict_rating(row['user'], row['id'], system, topN=topN), axis=1)
         mae = (data['rating'] - predictions).abs().mean()
         rmse = np.sqrt(((data['rating'] - predictions) ** 2).mean())
         return mae, rmse
