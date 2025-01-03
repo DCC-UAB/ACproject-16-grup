@@ -12,15 +12,15 @@ from surprise import Dataset, Reader
 
 
 def user_to_user(user_id, rates, movies, similarity='cosine', n=5):
-    user_user = UserUserRecommender()
-    user_user.load_data(rates, movies)
+    user_user = UserUserRecommender(rates, movies)
+    user_user.load_data()
     user_user.calculate_similarity_matrix(method=similarity)
-    rec = user_user.recomana(user_id, topN=n)
+    rec = user_user.recommend_for_user(user_id, topN=n)
     print(f"Recomanacions per a l'usuari {user_id}:\n{rec}")
 
 def item_to_item(user_id, rates, movies, similarity, n):
-    item_item = ItemItemRecommender()
-    item_item.load_data(rates, movies)
+    item_item = ItemItemRecommender(rates, movies)
+    item_item.load_data()
     item_item.calculate_similarity_matrix(method=similarity)
     rec = item_item.recommend_for_user(user_id, topN=n)
     print(rec)
