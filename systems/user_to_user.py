@@ -1,11 +1,8 @@
 import pandas as pd
-import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import time
 import sys
 import os
-import seaborn as sns
-import matplotlib.pyplot as plt
 import pandas as pd
 import sys
 import os
@@ -55,13 +52,14 @@ class UserUserRecommender(Collaborative):
 
 if __name__ == "__main__":
     start_time = time.time()
-    recommender = UserUserRecommender()
 
     # Carregar les dades
     ratings, movies, _, _ = small_ratings()
     train_data, test_data = train_test_split(ratings, train_size=0.7, random_state=42)
     ground_truth_df, ratings = ground_truth(ratings)
-    recommender.load_data(train_data, movies)
+
+    recommender = UserUserRecommender(train_data, movies)
+    recommender.load_data()
 
     # Avaluació amb similitud cosinus
     recommender.calculate_similarity_matrix(method='cosine')

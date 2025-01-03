@@ -1,7 +1,5 @@
 import pandas as pd
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-import time
 import sys
 import os
 import seaborn as sns
@@ -14,8 +12,6 @@ script_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.abspath(os.path.join(script_dir, '..'))
 sys.path.append(parent_dir)
 
-from data_preprocessing.preprocessing_csv import small_ratings, ground_truth
-from sklearn.model_selection import train_test_split
 from abc import abstractmethod
 
 class Collaborative:

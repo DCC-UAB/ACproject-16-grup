@@ -3,8 +3,6 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import sys
 import os
-import matplotlib.pyplot as plt
-import seaborn as sns
 import time
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -61,20 +59,20 @@ class ItemItemRecommender(Collaborative):
         recommended_items = pd.Series(recommendations).sort_values(ascending=False).head(topN)
         recommended_items = recommended_items.reset_index()
         recommended_items.columns = ['id', 'predicted_rating']
-        recommended_items = pd.merge(recommended_items, self.items[['id', 'title']], on='id', how='left')
+        recommended_items = pd.merge(recommended_items, self.movies[['id', 'title']], on='id', how='left')
 
         return recommended_items[['title', 'predicted_rating']]
 
 if __name__ == "__main__":
     start_time = time.time()
-    # Exemple d'ús
-    recommender = ItemItemRecommender()
-
+    
     # Carregar les dades
     ratings, movies, _, _ = small_ratings()
     ground_truth_df, ratings = ground_truth(ratings)
     train_data, test_data = train_test_split(ratings, train_size=0.7, random_state=42)
-    recommender.load_data(train_data, movies)
+
+    recommender = ItemItemRecommender(train_data, movies)
+    recommender.load_data()
 
     user_id = 100
 
